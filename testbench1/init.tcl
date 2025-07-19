@@ -13,7 +13,8 @@ create_project $project_name $project_dir -part $part -force
 # Function to add files from a directory if it exists and contains files
 proc add_files_from_dir {dir file_types fileset_name} {
     if {[file exists $dir] && [file isdirectory $dir]} {
-        set files [glob -nocomplain -directory $dir {*}.$file_types]
+        set files [glob -nocomplain -directory "$dir" "*.$file_types"]
+        puts "Searching for $file_types files in $dir..."
         if {[llength $files] > 0} {
             puts "Adding files from $dir to $fileset_name:"
             foreach file $files {
@@ -30,7 +31,7 @@ proc add_files_from_dir {dir file_types fileset_name} {
 
 # Add source files (VHDL, Verilog, SystemVerilog)
 puts "\n--- Adding Design Sources ---"
-add_files_from_dir "./src" "{vhd,vhdl,v,sv}" "sources_1"
+add_files_from_dir "$project_dir/src" "{vhd,vhdl,v,sv}" "sources_1"
 
 # Add constraint files
 puts "\n--- Adding Constraint Files ---"
