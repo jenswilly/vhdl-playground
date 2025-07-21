@@ -22,12 +22,13 @@ architecture behavioral of testbench is
     constant HALF_PERIOD : time := 50 ns; -- Half period for 10 MHz clock
 
 begin
-    clk : process 
-    begin
-        clk_10mhz <= not clk_10mhz after HALF_PERIOD when clk_finished /= '1' else '0';
-    end process;
+    clk_10mhz <= not clk_10mhz after HALF_PERIOD when clk_finished /= '1' else '0';
 
-    UUT: entity work.pwm(behavioral) port map (
+    UUT: entity work.pwm(behavioral) 
+    generic map (
+        RESOLUTION => 10
+    )
+    port map (
         i_clk => clk_10mhz,
         i_enable => '1',
         i_duty_cycle => duty_cycle,
@@ -37,17 +38,16 @@ begin
         
     process
     begin
-    	duty_cycle <= 128;
+    	duty_cycle <= 2;
         clk_finished <= '0';
-        -- Do stuff with clk
-        wait for 100 ms;
 
-        duty_cycle <= 64; -- Change duty cycle to 25%
+        wait for 100 ms;
+        
+        duty_cycle <= 8;
         wait for 100 ms;
 
         -- Done
         clk_finished <= '1';
         wait;
     end process;
-
 end behavioral;
