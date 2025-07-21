@@ -19,7 +19,7 @@ entity pwm is
 end pwm;
 
 architecture behavioral of pwm is
-    constant CLK_DIVISOR : integer := (CLK_FREQ / PWM_FREQ) / RESOLUTION - 1;
+    constant CLK_DIVISOR : integer := (CLK_FREQ / PWM_FREQ) / RESOLUTION - 1; --FIXME: Probably not use RESOLUTION here to account for min/max pulse width
     signal pwm_clk_enable : std_logic;
     signal pwm_clk_counter : integer range 0 to CLK_DIVISOR - 1 := 0;
     signal pwm_counter : integer range 0 to RESOLUTION - 1 := 0;
@@ -42,6 +42,7 @@ begin
     begin
         if(rising_edge(i_clk)) then
             if(i_enable = '1' and pwm_clk_enable = '1') then
+                -- FIXME: Now duty_cycle is for the entire period not taking min/max pulse width into account
                 o_pwm <= '1' when pwm_counter < i_duty_cycle else '0';
                 if(pwm_counter = RESOLUTION - 1) then
                     pwm_counter <= 0; -- Reset counter after reaching resolution
