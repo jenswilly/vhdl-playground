@@ -12,11 +12,11 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity pwm is
     generic (
-        CLK_FREQ : integer := 10000000          -- Clock frequency
-        RESOLUTION : integer := 256             -- PWM resolution (8-bit)
-        PWM_FREQ : integer := 50;               -- PWM frequency in Hz. 50 is 20 ms period
-        MIN_PULSE_WIDTH_US : integer range 1 to 1 / PWM_FREQ * 1000000 := 1000;   -- Minimum pulse width in microseconds
-        MAX_PULSE_WIDTH_US : integer range 1 to 1 / PWM_FREQ * 1000000 := 2000   -- Maximum pulse width in microseconds
+        CLK_FREQ : integer := 10000000;   -- Clock frequency
+        RESOLUTION : integer := 256;      -- PWM resolution (8-bit)
+        PWM_FREQ : integer := 50;         -- PWM frequency in Hz. 50 is 20 ms period
+        MIN_PULSE_WIDTH_US : integer range 1 to 1000000 / PWM_FREQ := 1000;   -- Minimum pulse width in microseconds
+        MAX_PULSE_WIDTH_US : integer range 1 to 1000000 / PWM_FREQ := 2000   -- Maximum pulse width in microseconds
     );
     port (
         i_clk : in std_logic;

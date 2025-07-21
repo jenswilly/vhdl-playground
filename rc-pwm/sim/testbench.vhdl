@@ -14,14 +14,11 @@ entity testbench is
 end testbench;
 
 architecture behavioral of testbench is
-    component pwm 
-        port(
-            a, b, c : in std_logic;
-            j, k : out std_logic);
-    end component;
-    
     signal clk_10mhz : std_logic := '0';
     signal clk_finished : std_logic;
+    
+    signal duty_cycle : integer := 128;
+    signal pwm_out : std_logic;
     constant HALF_PERIOD : time := 50 ns; -- Half period for 10 MHz clock
 
 begin
@@ -30,19 +27,27 @@ begin
         clk_10mhz <= not clk_10mhz after HALF_PERIOD when clk_finished /= '1' else '0';
     end process;
 
-    UUT: comb port map(
-        a => abc(2),
-        b => abc(1),
-        c => abc(0),
-        j => j,
-        k => k);
+    UUT: entity work.pwm(behavioral) port map (
+        i_clk => clk_10mhz,
+        i_enable => '1',
+        i_duty_cycle => duty_cycle,
+        o_pwm => pwm_out
+    );
+
         
     process
     begin
+    	duty_cycle <= 128;
         clk_finished <= '0';
         -- Do stuff with clk
-        -- ...
+        wait for 100 ms;
+
+        duty_cycle <= 64; -- Change duty cycle to 25%
+        wait for 100 ms;
+
+        -- Done
         clk_finished <= '1';
+        wait;
     end process;
 
 end behavioral;
