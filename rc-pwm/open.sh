@@ -1,1 +1,1 @@
-vivado -nolog -nojournal rc-pwm.xpr
+vivado -nolog rc-pwm.xpr
