@@ -17,7 +17,7 @@ architecture behavioral of testbench is
     signal clk_10mhz : std_logic := '0';
     signal clk_finished : std_logic;
     
-    signal duty_cycle : integer := 128;
+    signal position : integer := 50;
     signal pwm_out : std_logic;
     constant HALF_PERIOD : time := 50 ns; -- Half period for 10 MHz clock
 
@@ -26,24 +26,29 @@ begin
 
     UUT: entity work.pwm(behavioral) 
     generic map (
-        RESOLUTION => 10
+        RESOLUTION => 100,
+        MIN_PULSE_WIDTH_US => 900,
+        MAX_PULSE_WIDTH_US => 2100
     )
     port map (
         i_clk => clk_10mhz,
         i_enable => '1',
-        i_duty_cycle => duty_cycle,
+        i_position => position,
         o_pwm => pwm_out
     );
 
         
     process
     begin
-    	duty_cycle <= 2;
+    	position <= 0;
         clk_finished <= '0';
 
         wait for 100 ms;
         
-        duty_cycle <= 8;
+        position <= 100;
+        wait for 100 ms;
+        
+        position <= 50;
         wait for 100 ms;
 
         -- Done
