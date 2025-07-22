@@ -1,17 +1,9 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
 
 entity testbench is
-end testbench;
+end entity testbench;
 
 architecture behavioral of testbench is
     signal clk_10mhz : std_logic := '0';
@@ -24,7 +16,7 @@ architecture behavioral of testbench is
 begin
     clk_10mhz <= not clk_10mhz after HALF_PERIOD when clk_finished /= '1' else '0';
 
-    UUT: entity work.pwm(behavioral) 
+    UUT: entity work.pwm(arch) 
     generic map (
         RESOLUTION => 100,
         MIN_PULSE_WIDTH_US => 900,
@@ -36,8 +28,7 @@ begin
         i_position => position,
         o_pwm => pwm_out
     );
-
-        
+ 
     process
     begin
     	position <= 0;
@@ -55,4 +46,4 @@ begin
         clk_finished <= '1';
         wait;
     end process;
-end behavioral;
+end architecture behavioral;

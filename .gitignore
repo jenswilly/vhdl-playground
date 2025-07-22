@@ -2,5 +2,6 @@
 *.log
 *.xpr
 vivado*.str
+*.dcp
 
 .Xil/
