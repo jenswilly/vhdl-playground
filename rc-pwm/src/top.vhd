@@ -11,7 +11,7 @@ entity top is
     );        
 end entity top;
 
-architecture arch of top is
+architecture rtl of top is
 begin
     pwm1: entity work.pwm(arch)
     generic map(
@@ -39,4 +39,4 @@ begin
         o_pwm => led(2)
     );
 
-end architecture arch;
+end architecture rtl;
