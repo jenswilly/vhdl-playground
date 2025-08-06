@@ -17,16 +17,16 @@ end entity top;
 architecture rtl of top is
     -- Global reset and clock
     signal global_reset : std_logic; -- Reset, active high: '0' means ready to go
-    signal reset_sync : std_logic_vector(2 downto 0) := "000"; -- Could also be a variable in the reset process, but recommended to use signal for sim. visibility and synthesis clarity (flip-flop) and standard practise for reset
+    signal reset_sync : std_logic_vector(2 downto 0) := "000";
     signal clk_locked : std_logic;
     signal clk_48mhz : std_logic;
     signal clkfb : STD_LOGIC;
 
     -- SPI signals
-    signal spi_clk : std_logic;
-    signal o_spi_mosi : std_logic;
-    signal i_spi_miso : std_logic;
-    -- signal spi_ss_n : std_logic;
+    -- signal i_spi_clk : std_logic;   -- Connect to external pin
+    -- signal i_spi_mosi : std_logic;  -- Connect to external pin
+    -- signal i_spi_cc_n : std_logic;  -- Connect to external pin
+    -- signal o_spi_miso : std_logic;  -- Connect to external pin
     signal spi_dr : std_logic;
     signal spi_data : std_logic_vector(7 downto 0);
     
@@ -66,13 +66,13 @@ begin
         STARTUP_WAIT => FALSE
     )
     port map (
-        CLKOUT0 => clk_48mhz,
+        CLKOUT0 => clk_48mhz,   -- Output: 48 MHz
         CLKFBOUT => clkfb,
         CLKFBIN => clkfb,
-        CLKIN1 => sysclk,
+        CLKIN1 => sysclk,       -- Input: 12 MHz
         PWRDWN => '0',
-        RST => '0',  -- No external reset - let MMCM self-start
-        LOCKED => clk_locked
+        RST => '0',             -- No external reset - let MMCM self-start
+        LOCKED => clk_locked    -- Output: '1' when clock is locked
     );
 
     -- Automatic reset generation - activates when system is programmed and ready
@@ -81,6 +81,9 @@ begin
     -- 2. Clock manager locks to stable frequency
     -- 3. 3-stage synchronizer releases reset cleanly
     -- 4. System starts normal operation
+    -- Note: The `reset_sync` signal could also be a variable in the reset process, 
+    --    but it is recommended to use signal for visibility in simulation, synthesis clarity (flip-flop) 
+    --    and it is (apparently) standard practice for a reset sync to be implemented as a signal.
     reset : process(clk_48mhz, clk_locked)
     begin
         if (clk_locked = '0') then
@@ -97,10 +100,10 @@ begin
     spi1 : entity work.spi_slave(arch)
     generic map ( WIDTH => 8 )
     port map (
-        sclk => spi_clk,
-        i_mosi => o_spi_mosi,
-        o_miso => i_spi_miso,
-        ss_n => global_reset, -- When reset is released, assert ss_n
+        sclk => i_spi_clk,
+        i_mosi => i_spi_mosi,
+        o_miso => o_spi_miso,
+        ss_n => i_spi_ss_n,
         o_dr => spi_dr,
         o_data => spi_data
     );
