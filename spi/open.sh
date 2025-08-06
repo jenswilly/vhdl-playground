@@ -1,1 +1,1 @@
-vivado -nolog rc-pwm.xpr
+vivado -nolog spi_test.xpr &
