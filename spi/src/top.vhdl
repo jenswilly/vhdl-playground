@@ -1,6 +1,9 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
+Library UNISIM;
+use UNISIM.vcomponents.all;
+
 -- Top-level disign for RC PWM test
 -- Be sure to define CLK (100 MHz) and LED[0:3] in constraints file
 
@@ -12,13 +15,22 @@ entity top is
 end entity top;
 
 architecture rtl of top is
+    -- Global reset and clock
+    signal global_reset : std_logic; -- Reset, active high: '0' means ready to go
+    signal reset_sync : std_logic_vector(2 downto 0) := "000"; -- Could also be a variable in the reset process, but recommended to use signal for sim. visibility and synthesis clarity (flip-flop) and standard practise for reset
+    signal clk_locked : std_logic;
+    signal clk_48mhz : std_logic;
+    signal clkfb : STD_LOGIC;
+
+    -- SPI signals
     signal spi_clk : std_logic;
     signal o_spi_mosi : std_logic;
     signal i_spi_miso : std_logic;
-    signal spi_ss_n : std_logic;
+    -- signal spi_ss_n : std_logic;
     signal spi_dr : std_logic;
     signal spi_data : std_logic_vector(7 downto 0);
     
+    -- FIFO signals
     signal fifo_rst : std_logic := '0';
     signal fifo_rd_en : std_logic := '0';
     signal fifo_dout : std_logic_vector(7 downto 0);
@@ -39,13 +51,56 @@ architecture rtl of top is
     end component  fifo_0;
     
 begin
+    -- Clock Manager (MMCM) for generating 48Hz from 12 MHz system clock
+    MMCME2_inst : MMCME2_BASE
+    generic map (
+        BANDWIDTH => "OPTIMIZED",
+        CLKFBOUT_MULT_F => 64.0,    -- 12 * 64 = 768 MH
+        CLKFBOUT_PHASE => 0.0,
+        CLKIN1_PERIOD => 83.333,    -- 12 MHz = 83.333 ns period
+        CLKOUT0_DIVIDE_F => 16.0,   -- 768 MHz / 16 = 48 MHz
+        CLKOUT0_DUTY_CYCLE => 0.5,
+        CLKOUT0_PHASE => 0.0,
+        DIVCLK_DIVIDE => 1,
+        REF_JITTER1 => 0.0,
+        STARTUP_WAIT => FALSE
+    )
+    port map (
+        CLKOUT0 => clk_48mhz,
+        CLKFBOUT => clkfb,
+        CLKFBIN => clkfb,
+        CLKIN1 => sysclk,
+        PWRDWN => '0',
+        RST => '0',  -- No external reset - let MMCM self-start
+        LOCKED => clk_locked
+    );
+
+    -- Automatic reset generation - activates when system is programmed and ready
+    -- Reset sequence:
+    -- 1. FPGA configuration completes (GSR released automatically)
+    -- 2. Clock manager locks to stable frequency
+    -- 3. 3-stage synchronizer releases reset cleanly
+    -- 4. System starts normal operation
+    reset : process(clk_48mhz, clk_locked)
+    begin
+        if (clk_locked = '0') then
+            -- Hold in reset until clock manager is locked and stable
+            reset_sync <= "000";
+            global_reset <= '1';
+        elsif rising_edge(clk_48mhz) then
+            -- Release reset synchronously after clock is stable
+            reset_sync <= reset_sync(1 downto 0) & '1';
+            global_reset <= not reset_sync(2);  -- Released after 3 clocks
+        end if;
+    end process reset;
+
     spi1 : entity work.spi_slave(arch)
     generic map ( WIDTH => 8 )
     port map (
         sclk => spi_clk,
         i_mosi => o_spi_mosi,
         o_miso => i_spi_miso,
-        ss_n => spi_ss_n,
+        ss_n => global_reset, -- When reset is released, assert ss_n
         o_dr => spi_dr,
         o_data => spi_data
     );

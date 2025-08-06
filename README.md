@@ -8,5 +8,10 @@ In subdirectories, first source the Vivado settings script, then run `source ini
 
 ### Open Project
 
-If the project's Vivado files have been created, run `./open.sh` to open Vivado and open the project.
+If the project's Vivado files have been created, run `source open.sh` to open Vivado and open the project.
+
+### Clean
+
+To clean all Vivado-generated files, run `source clean.sh`. After this, it should be possible to re-create 
+the project.
 

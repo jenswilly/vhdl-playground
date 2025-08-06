@@ -28,7 +28,9 @@ begin
         if(falling_edge(ss_n)) then
             -- Reset bit bufffer on SS going active
             tmp_buffer := (0 => '1', others => '0');
-        elsif(ss_n = '0') then
+        end if;
+        
+        if(ss_n = '0') then
             if(rising_edge(sclk)) then  -- TODO: CPHA. 0 = sample on _from_ CLK idle; 1 = sample on _to_ CLK idle.
                 if(rx_buffer(WIDTH) = '1') then
                     -- Start new word
