@@ -9,25 +9,41 @@ architecture behavioral of testbench is
     signal o_mosi : std_logic := '0';
     signal i_miso : std_logic;
     signal ss_n : std_logic := '1';
-    
-    signal dr : std_logic := '0';
-    signal data_in : std_logic_vector(7 downto 0) := "00000000";
+    signal led : std_logic;
     
     constant data_out : std_logic_vector(15 downto 0) := "0101010111001100";
+    
+    -- 12 MHz system clock
+    signal clk_12mhz : std_logic := '0';
+    constant HALF_PERIOD : time := 41.6667 ns; -- Half period for 12 MHz clock
+
+    component system is
+    port(
+        i_clk : in std_logic;
+        o_led : out std_logic;
+
+        -- SPI input
+        i_spi_clk : in std_logic;
+        i_spi_mosi : in std_logic;
+        i_spi_ss_n : in std_logic;
+        o_spi_miso : out std_logic
+    );        
+    end component system;
 begin
-    UUT: entity work.spi_slave(arch)
-    generic map (WIDTH => 8)
+    clk_12mhz <= not clk_12mhz after HALF_PERIOD;
+
+    UUT: system 
     port map (
-        sclk => sclk,
-        i_mosi => o_mosi,
-        o_miso => i_miso,
-        ss_n => ss_n,
-        o_dr => dr,
-        o_data => data_in
-    );
+        i_clk => clk_12mhz,
+        o_led => led,
+        i_spi_clk => sclk,
+        i_spi_mosi => o_mosi,
+        i_spi_ss_n => ss_n,
+        o_spi_miso => i_miso
+    ); 
     
     process
-    begin
+    begin 
         wait for 100 ns;
         
         -- Assert SS and shift out bit 0

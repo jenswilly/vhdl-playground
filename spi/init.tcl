@@ -8,9 +8,10 @@ set_property STEPS.WRITE_BITSTREAM.ARGS.BIN_FILE true [get_runs impl_1]
 # Add source files
 puts "--- Adding Design Sources ---\n"
 add_files -fileset sources_1 ./src/spi.vhdl
-add_files -fileset sources_1 ./src/top.vhdl
+add_files -fileset sources_1 ./src/system.vhdl
+add_files -fileset sources_1 ./src/top_syn.vhdl
 set_property FILE_TYPE {VHDL 2008} [get_files *.vhdl]
-set_property used_in_simulation false [get_files top.vhdl]
+set_property used_in_simulation false [get_files top_syn.vhdl]
 update_compile_order -fileset sources_1
 
 # Add IP sources
@@ -29,7 +30,10 @@ add_files -fileset constrs_1 ./constraints/cmod-a7-master.xdc
 # Add simulation files
 puts "--- Adding Simulation Sources ---\n"
 add_files -fileset sim_1 ./sim/testbench.vhdl
-set_property FILE_TYPE {VHDL 2008} [get_files *.vhdl]
+add_files -fileset sim_1 ./simtestbench_behav.wcfg
+set_property FILE_TYPE {VHDL 2008} [get_files testbench.vhdl]
+set_property used_in_synthesis false [get_files testbench.vhdl]
+set_property xsim.view ./sim/testbench_behav.wcfg [get_filesets sim_1]
 set_property -name {xsim.simulate.runtime} -value {3500ns} -objects [get_filesets sim_1]
 
 puts "Project setup complete. Open project by running 'source open.sh'"

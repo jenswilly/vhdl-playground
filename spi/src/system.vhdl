@@ -1,20 +1,36 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
+-- For MMCME2_BASE
 Library UNISIM;
 use UNISIM.vcomponents.all;
 
--- Top-level disign for RC PWM test
--- Be sure to define CLK (100 MHz) and LED[0:3] in constraints file
+-- Top-level design for SPI-to-FIFO interface on Cmod-A7
+-- This design is the "system" entity that integrates the SPI slave, FIFO, and LED control.
+--
+-- Required inputs are:
+-- - `i_clk`: 12 MHz system clock (which will be scaled to 48 MHz for FIFO and reset logic)
+-- - `o_led`: active high LED output indicating "FIFO not empty"
+-- - `i_spi_clk`: SPI clock input
+-- - `i_spi_mosi`: SPI input
+-- - `i_spi_ss_n`: SPI CS/SS (active low) input
+-- - `o_spi_miso`: SPI output (nothing is output from this system)
+--
 
-entity top is
-    port(
-        sysclk : in std_logic;
-        led : out std_logic_vector(0 to 1)
-    );        
-end entity top;
+entity system is
+port(
+    i_clk : in std_logic;
+    o_led : out std_logic;
+    
+    -- SPI input
+    i_spi_clk : in std_logic;
+    i_spi_mosi : in std_logic;
+    i_spi_ss_n : in std_logic;
+    o_spi_miso : out std_logic
+);        
+end entity system;
 
-architecture rtl of top is
+architecture arch of system is
     -- Global reset and clock
     signal global_reset : std_logic; -- Reset, active high: '0' means ready to go
     signal reset_sync : std_logic_vector(2 downto 0) := "000";
@@ -23,19 +39,12 @@ architecture rtl of top is
     signal clkfb : STD_LOGIC;
 
     -- SPI signals
-    -- signal i_spi_clk : std_logic;   -- Connect to external pin
-    -- signal i_spi_mosi : std_logic;  -- Connect to external pin
-    -- signal i_spi_cc_n : std_logic;  -- Connect to external pin
-    -- signal o_spi_miso : std_logic;  -- Connect to external pin
     signal spi_dr : std_logic;
     signal spi_data : std_logic_vector(7 downto 0);
     
     -- FIFO signals
-    signal fifo_rst : std_logic := '0';
-    signal fifo_rd_en : std_logic := '0';
-    signal fifo_dout : std_logic_vector(7 downto 0);
-    signal fifo_full : std_logic;
-    signal fifo_empty : std_logic;
+    signal fifo_empty : std_logic;   
+ 
     
     component fifo_0 is
     port (
@@ -69,7 +78,7 @@ begin
         CLKOUT0 => clk_48mhz,   -- Output: 48 MHz
         CLKFBOUT => clkfb,
         CLKFBIN => clkfb,
-        CLKIN1 => sysclk,       -- Input: 12 MHz
+        CLKIN1 => i_clk,       -- Input: 12 MHz
         PWRDWN => '0',
         RST => '0',             -- No external reset - let MMCM self-start
         LOCKED => clk_locked    -- Output: '1' when clock is locked
@@ -110,18 +119,14 @@ begin
     
     fifo : fifo_0 
     port map (
-        clk => sysclk,
-        rst => fifo_rst,
+        clk => i_clk,   -- Use the 48 MHz clock for FIFO operations
+        rst => '0',
         din => spi_data,
         wr_en => spi_dr,
-        rd_en => fifo_rd_en,
-        dout => fifo_dout,
-        full => fifo_full,
+        rd_en => '0',  -- No read enable for now
         empty => fifo_empty
     );
-        
-    -- LED assignments
-    led(0) <= spi_dr;
-    led(1) <= fifo_empty;
     
-end architecture rtl;
+    o_led <= not fifo_empty;
+    
+end architecture arch;
