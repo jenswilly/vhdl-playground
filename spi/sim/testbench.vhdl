@@ -9,7 +9,7 @@ architecture behavioral of testbench is
     signal o_mosi : std_logic := '0';
     signal i_miso : std_logic;
     signal ss_n : std_logic := '1';
-    signal led : std_logic;
+    signal leds : std_logic_vector(0 to 1);
     
     constant data_out : std_logic_vector(15 downto 0) := "0101010111001100";
     
@@ -20,7 +20,7 @@ architecture behavioral of testbench is
     component system is
     port(
         i_clk : in std_logic;
-        o_led : out std_logic;
+        o_leds : out std_logic_vector(0 to 1);
 
         -- SPI input
         i_spi_clk : in std_logic;
@@ -35,7 +35,7 @@ begin
     UUT: system 
     port map (
         i_clk => clk_12mhz,
-        o_led => led,
+        o_leds => leds,
         i_spi_clk => sclk,
         i_spi_mosi => o_mosi,
         i_spi_ss_n => ss_n,
@@ -43,8 +43,8 @@ begin
     ); 
     
     process
-    begin 
-        wait for 100 ns;
+    begin
+        wait for 4000 ns; 
         
         -- Assert SS and shift out bit 0
         ss_n <= '0';

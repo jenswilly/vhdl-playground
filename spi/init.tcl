@@ -17,7 +17,6 @@ update_compile_order -fileset sources_1
 # Add IP sources
 puts "--- Adding IP Sources ---\n"
 add_files -fileset sources_1 ./ip/fifo_0.xci
-set_property used_in_simulation false [get_files fifo_0.xci]
 catch { config_ip_cache -export [get_ips -all fifo_0] }
 export_ip_user_files -of_objects [get_files ./ip/fifo_0.xci] -no_script -sync -force -quiet
 generate_target {instantiation_template} [get_files ./ip/fifo_0.xci]

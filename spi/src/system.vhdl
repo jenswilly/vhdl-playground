@@ -20,7 +20,7 @@ use UNISIM.vcomponents.all;
 entity system is
 port(
     i_clk : in std_logic;
-    o_led : out std_logic;
+    o_leds : out std_logic_vector(0 to 1);
     
     -- SPI input
     i_spi_clk : in std_logic;
@@ -59,6 +59,14 @@ architecture arch of system is
         );
     end component  fifo_0;
     
+    component clk_wiz_0
+    port (
+        clk_out1          : out    std_logic;
+        locked            : out    std_logic;
+        clk_in1           : in     std_logic 
+     );
+    end component;
+        
 begin
     -- Clock Manager (MMCM) for generating 48Hz from 12 MHz system clock
     MMCME2_inst : MMCME2_BASE
@@ -93,13 +101,15 @@ begin
     -- Note: The `reset_sync` signal could also be a variable in the reset process, 
     --    but it is recommended to use signal for visibility in simulation, synthesis clarity (flip-flop) 
     --    and it is (apparently) standard practice for a reset sync to be implemented as a signal.
-    reset : process(clk_48mhz, clk_locked)
+    -- Note 2: Currently using the 12 MHz input clock and not the scaled 48 MHz - until that is working and we get a locked signal...
+    reset : process(i_clk)
     begin
-        if (clk_locked = '0') then
-            -- Hold in reset until clock manager is locked and stable
-            reset_sync <= "000";
-            global_reset <= '1';
-        elsif rising_edge(clk_48mhz) then
+--        if (clk_locked = '0') then
+--            -- Hold in reset until clock manager is locked and stable
+--            reset_sync <= "000";
+--            global_reset <= '1';
+--        elsif rising_edge(clk_48mhz) then
+        if(rising_edge(i_clk)) then
             -- Release reset synchronously after clock is stable
             reset_sync <= reset_sync(1 downto 0) & '1';
             global_reset <= not reset_sync(2);  -- Released after 3 clocks
@@ -120,13 +130,14 @@ begin
     fifo : fifo_0 
     port map (
         clk => i_clk,   -- Use the 48 MHz clock for FIFO operations
-        rst => '0',
+        rst => global_reset,
         din => spi_data,
         wr_en => spi_dr,
         rd_en => '0',  -- No read enable for now
         empty => fifo_empty
     );
     
-    o_led <= not fifo_empty;
+    o_leds(0) <= not fifo_empty;
+    o_leds(1) <= clk_locked;
     
 end architecture arch;
