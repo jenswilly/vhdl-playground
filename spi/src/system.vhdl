@@ -31,12 +31,8 @@ port(
 end entity system;
 
 architecture arch of system is
-    -- Global reset and clock
-    signal global_reset : std_logic; -- Reset, active high: '0' means ready to go
-    signal reset_sync : std_logic_vector(2 downto 0) := "000";
     signal clk_locked : std_logic;
     signal clk_48mhz : std_logic;
-    signal clkfb : STD_LOGIC;
 
     -- SPI signals
     signal spi_dr : std_logic;
@@ -48,75 +44,18 @@ architecture arch of system is
     
     component fifo_0 is
     port (
-        clk : IN STD_LOGIC;
-        rst : IN STD_LOGIC;
-        din : IN STD_LOGIC_VECTOR(7 DOWNTO 0);
-        wr_en : IN STD_LOGIC;
-        rd_en : IN STD_LOGIC;
-        dout : OUT STD_LOGIC_VECTOR(7 DOWNTO 0);
-        full : OUT STD_LOGIC;
-        empty : OUT STD_LOGIC
+        clk    : in  std_logic;
+        rst    : in  std_logic;
+        din    : in  std_logic_vector(7 downto 0);
+        wr_en  : in  std_logic;
+        rd_en  : in  std_logic;
+        dout   : out std_logic_vector(7 downto 0);
+        full   : out std_logic;
+        empty  : out std_logic
         );
     end component  fifo_0;
-    
-    component clk_wiz_0
-    port (
-        clk_out1          : out    std_logic;
-        locked            : out    std_logic;
-        clk_in1           : in     std_logic 
-     );
-    end component;
-        
+            
 begin
-    -- Clock Manager (MMCM) for generating 48Hz from 12 MHz system clock
-    -- This works on device but not in simulation. After several microseconds, the clock starts
-    -- but the clk_locked never goes high.
-    MMCME2_inst : MMCME2_BASE
-    generic map (
-        BANDWIDTH => "OPTIMIZED",
-        CLKFBOUT_MULT_F => 64.0,    -- 12 * 64 = 768 MH
-        CLKFBOUT_PHASE => 0.0,
-        CLKIN1_PERIOD => 83.333,    -- 12 MHz = 83.333 ns period
-        CLKOUT0_DIVIDE_F => 16.0,   -- 768 MHz / 16 = 48 MHz
-        CLKOUT0_DUTY_CYCLE => 0.5,
-        CLKOUT0_PHASE => 0.0,
-        DIVCLK_DIVIDE => 1,
-        REF_JITTER1 => 0.0,
-        STARTUP_WAIT => FALSE
-    )
-    port map (
-        CLKOUT0 => clk_48mhz,   -- Output: 48 MHz
-        CLKFBOUT => clkfb,
-        CLKFBIN => clkfb,
-        CLKIN1 => i_clk,       -- Input: 12 MHz
-        PWRDWN => '0',
-        RST => '0',             -- No external reset - let MMCM self-start
-        LOCKED => clk_locked    -- Output: '1' when clock is locked
-    );
-
-    -- Automatic reset generation - activates when system is programmed and ready
-    -- Reset sequence:
-    -- 1. FPGA configuration completes (GSR released automatically)
-    -- 2. Clock manager locks to stable frequency
-    -- 3. 3-stage synchronizer releases reset cleanly
-    -- 4. System starts normal operation
-    -- Note: The `reset_sync` signal could also be a variable in the reset process, 
-    --    but it is recommended to use signal for visibility in simulation, synthesis clarity (flip-flop) 
-    --    and it is (apparently) standard practice for a reset sync to be implemented as a signal.
-    -- Note 2: Currently using the 12 MHz input clock and not the scaled 48 MHz - until that is working and we get a locked signal...
-    reset : process(i_clk)
-    begin
---        if (clk_locked = '0') then
---            -- Hold in reset until clock manager is locked and stable
---            reset_sync <= "000";
---            global_reset <= '1';
---        elsif rising_edge(clk_48mhz) then
-        if(rising_edge(i_clk)) then
-            -- Release reset synchronously after clock is stable
-            reset_sync <= reset_sync(1 downto 0) & '1';
-            global_reset <= not reset_sync(2);  -- Released after 3 clocks
-        end if;
-    end process reset;
 
     spi1 : entity work.spi_slave(arch)
     generic map ( WIDTH => 8 )
@@ -132,7 +71,7 @@ begin
     fifo : fifo_0 
     port map (
         clk => i_clk,   -- Use the 48 MHz clock for FIFO operations
-        rst => global_reset,
+        rst => '0',
         din => spi_data,
         wr_en => spi_dr,
         rd_en => '0',  -- No read enable for now

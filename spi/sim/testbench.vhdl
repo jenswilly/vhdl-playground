@@ -15,7 +15,7 @@ architecture behavioral of testbench is
     
     -- 12 MHz system clock
     signal clk_12mhz : std_logic := '0';
-    constant HALF_PERIOD : time := 41.6667 ns; -- Half period for 12 MHz clock
+    constant HALF_PERIOD : time := 41.6665 ns; -- Half period for 12 MHz clock
 
     component system is
     port(
