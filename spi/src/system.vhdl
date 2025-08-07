@@ -69,6 +69,8 @@ architecture arch of system is
         
 begin
     -- Clock Manager (MMCM) for generating 48Hz from 12 MHz system clock
+    -- This works on device but not in simulation. After several microseconds, the clock starts
+    -- but the clk_locked never goes high.
     MMCME2_inst : MMCME2_BASE
     generic map (
         BANDWIDTH => "OPTIMIZED",
