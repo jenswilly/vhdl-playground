@@ -7,6 +7,9 @@ set_property STEPS.WRITE_BITSTREAM.ARGS.BIN_FILE true [get_runs impl_1]
 
 # Add source files
 puts "--- Adding Design Sources ---\n"
+add_files -fileset sources_1 ./src/clock.vhdl
+add_files -fileset sources_1 ./src/pwm.vhdl
+add_files -fileset sources_1 ./src/reset.vhdl
 add_files -fileset sources_1 ./src/spi.vhdl
 add_files -fileset sources_1 ./src/system.vhdl
 add_files -fileset sources_1 ./src/top_syn.vhdl

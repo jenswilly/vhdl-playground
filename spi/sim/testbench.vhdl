@@ -11,6 +11,7 @@ architecture behavioral of testbench is
     signal ss_n : std_logic := '1';
     signal leds : std_logic_vector(0 to 1);
     signal ready : std_logic := '0';
+    signal servos : std_logic_vector(0 to 1);
 
     constant data_out : std_logic_vector(15 downto 0) := "0101010111001100";
     
@@ -26,7 +27,8 @@ begin
         o_leds => leds,
         i_rst => '0',
         o_ready => ready,
-
+        o_servo => servos,
+        
         i_spi_clk => sclk,
         i_spi_mosi => o_mosi,
         i_spi_ss_n => ss_n,

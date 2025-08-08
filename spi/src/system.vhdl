@@ -21,8 +21,9 @@ entity system is
 port(
     i_clk : in std_logic;
     o_leds : out std_logic_vector(0 to 1);
-    i_rst : in std_logic;       -- Global reset. Active high.
-    o_ready : out std_logic;    -- Clock and reset handler ready.
+    i_rst : in std_logic;                   -- Global reset. Active high.
+    o_ready : out std_logic;                -- Clock and reset handler ready.
+    o_servo : out std_logic_vector(0 to 1); -- Output servo PWM
     
     -- SPI input
     i_spi_clk : in std_logic;
@@ -78,7 +79,7 @@ begin
     clock_48mhz_inst : entity work.clock(arch)
     port map (
         i_clk => i_clk,
-        i_rst => i_rst,
+        i_rst => i_rst, -- Use input reset here. `reset` signal depends on this clock.
         o_48mhz_clk => clk_48mhz,
         o_clk_locked => clk_locked
     );
@@ -89,7 +90,7 @@ begin
         i_clk => clk_48mhz,
         i_clk_locked => clk_locked,
         i_reset => i_rst,
-        o_reset => reset
+        o_reset => reset -- Use this signal for everything except the clock generator
     );
     
     -- SPI slave in only synchronized to the SPI clock
@@ -100,7 +101,7 @@ begin
         i_mosi => i_spi_mosi,
         o_miso => o_spi_miso,
         ss_n => i_spi_ss_n,
-        i_rst => i_rst,
+        i_rst => reset,
         o_dr => spi_dr,
         o_data => spi_data
     );
@@ -109,11 +110,24 @@ begin
     fifo_inst : fifo_0
     port map (
         clk => clk_48mhz,
-        rst => i_rst,
+        rst => reset,
         din => spi_data,
         wr_en => spi_dr_pulse,
         rd_en => '0',  -- No read enable for now
         empty => fifo_empty
+    );
+    
+    -- PWM instance
+    pwm_inst : entity work.pwm(arch)
+    generic map (
+        CLK_FREQ => 48e6,
+        RESOLUTION => 180  -- 181 degrees: from +90 (180) to -90 (0); 0 (90) is midpoint
+    )
+    port map (
+        i_clk => clk_48mhz,
+        i_enable => not reset,
+        i_position => 90, -- Hardcoded for now
+        o_pwm => o_servo(0)
     );
 
     o_ready <= not reset;
