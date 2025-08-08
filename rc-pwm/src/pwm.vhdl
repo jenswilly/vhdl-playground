@@ -55,10 +55,10 @@ architecture arch of pwm is
 begin
     pwm_output : process(i_clk)
     begin
-        if(rising_edge(i_clk)) then
-            if(i_enable = '1') then
+        if rising_edge(i_clk) then
+            if i_enable = '1' then
                 -- Increment/wrap around clock counter each PWM period
-                if(clk_counter = TICKS_PER_PERIOD - 1) then
+                if clk_counter = TICKS_PER_PERIOD - 1 then
                     clk_counter <= 0;
                 else
                     clk_counter <= clk_counter + 1;

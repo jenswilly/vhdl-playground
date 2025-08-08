@@ -11,15 +11,15 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="0.000000 us"></ZoomStartTime>
-      <ZoomEndTime time="13.470485 us"></ZoomEndTime>
-      <Cursor1Time time="6.108109 us"></Cursor1Time>
+      <ZoomStartTime time="18,958,397 ps"></ZoomStartTime>
+      <ZoomEndTime time="18,958,759 ps"></ZoomEndTime>
+      <Cursor1Time time="18,958,585 ps"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="110"></NameColumnWidth>
-      <ValueColumnWidth column_width="66"></ValueColumnWidth>
+      <NameColumnWidth column_width="123"></NameColumnWidth>
+      <ValueColumnWidth column_width="83"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="13" />
+   <WVObjectSize size="15" />
    <wvobject type="logic" fp_name="/testbench/sclk">
       <obj_property name="ElementShortName">sclk</obj_property>
       <obj_property name="ObjectShortName">sclk</obj_property>
@@ -40,10 +40,6 @@
       <obj_property name="ElementShortName">clk_12mhz</obj_property>
       <obj_property name="ObjectShortName">clk_12mhz</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/testbench/data_out">
-      <obj_property name="ElementShortName">data_out[15:0]</obj_property>
-      <obj_property name="ObjectShortName">data_out[15:0]</obj_property>
-   </wvobject>
    <wvobject type="logic" fp_name="/testbench/UUT/spi_dr">
       <obj_property name="ElementShortName">spi_dr</obj_property>
       <obj_property name="ObjectShortName">spi_dr</obj_property>
@@ -60,17 +56,28 @@
       <obj_property name="ElementShortName">clk_48mhz</obj_property>
       <obj_property name="ObjectShortName">clk_48mhz</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/testbench/UUT/global_reset">
-      <obj_property name="ElementShortName">global_reset</obj_property>
-      <obj_property name="ObjectShortName">global_reset</obj_property>
-   </wvobject>
    <wvobject type="array" fp_name="/testbench/leds">
       <obj_property name="ElementShortName">leds[0:1]</obj_property>
       <obj_property name="ObjectShortName">leds[0:1]</obj_property>
-      <obj_property name="isExpanded"></obj_property>
    </wvobject>
    <wvobject type="logic" fp_name="/testbench/UUT/clk_locked">
       <obj_property name="ElementShortName">clk_locked</obj_property>
       <obj_property name="ObjectShortName">clk_locked</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/testbench/UUT/spi_dr_pulse">
+      <obj_property name="ElementShortName">spi_dr_pulse</obj_property>
+      <obj_property name="ObjectShortName">spi_dr_pulse</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/testbench/UUT/reset">
+      <obj_property name="ElementShortName">reset</obj_property>
+      <obj_property name="ObjectShortName">reset</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/testbench/UUT/o_ready">
+      <obj_property name="ElementShortName">o_ready</obj_property>
+      <obj_property name="ObjectShortName">o_ready</obj_property>
+   </wvobject>
+   <wvobject type="logic" fp_name="/testbench/UUT/spi_dr_prev">
+      <obj_property name="ElementShortName">spi_dr_prev</obj_property>
+      <obj_property name="ObjectShortName">spi_dr_prev</obj_property>
    </wvobject>
 </wave_config>

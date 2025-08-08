@@ -33,6 +33,6 @@ add_files -fileset sim_1 ./simtestbench_behav.wcfg
 set_property FILE_TYPE {VHDL 2008} [get_files testbench.vhdl]
 set_property used_in_synthesis false [get_files testbench.vhdl]
 set_property xsim.view ./sim/testbench_behav.wcfg [get_filesets sim_1]
-set_property -name {xsim.simulate.runtime} -value {3500ns} -objects [get_filesets sim_1]
+set_property -name {xsim.simulate.runtime} -value {22us} -objects [get_filesets sim_1]
 
 puts "Project setup complete. Open project by running 'source open.sh'"

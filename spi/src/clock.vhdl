@@ -30,7 +30,7 @@ begin
         clkin1 => i_clk,        -- Input: 12 MHz
         pwrdwn => '0',          -- Always powered on
         rst => i_rst,
-        locked => clk_locked    -- Output: '1' when clock is locked
+        locked => o_clk_locked    -- Output: '1' when clock is locked
     );
 
 end architecture arch;

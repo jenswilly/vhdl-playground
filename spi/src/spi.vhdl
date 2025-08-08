@@ -11,9 +11,10 @@ entity spi_slave is
         sclk : in std_logic;
         ss_n : in std_logic;
         i_mosi : in std_logic;
-        o_miso : out std_logic;
-        
-        o_dr : out std_logic;      -- Data ready: one full width of data has been received
+        o_miso : out std_logic; 
+
+        i_rst : in std_logic;   -- Active high reset. All SPI activity is ignored when set.
+        o_dr : out std_logic;   -- Data ready: one full width of data has been received
         o_data : out std_logic_vector(WIDTH-1 downto 0)
     );        
 end entity spi_slave;
@@ -25,14 +26,12 @@ begin
     spi : process(sclk, ss_n)
         variable tmp_buffer : std_logic_vector(WIDTH downto 0); -- Use temporary variable to have only one assignment to rx_buffer
     begin
-        if(falling_edge(ss_n)) then
+        if i_rst = '1' or ss_n = '1' then
             -- Reset bit bufffer on SS going active
             tmp_buffer := (0 => '1', others => '0');
-        end if;
-        
-        if(ss_n = '0') then
-            if(rising_edge(sclk)) then  -- TODO: CPHA. 0 = sample on _from_ CLK idle; 1 = sample on _to_ CLK idle.
-                if(rx_buffer(WIDTH) = '1') then
+        else
+            if rising_edge(sclk) then  -- TODO: CPHA. 0 = sample on _from_ CLK idle; 1 = sample on _to_ CLK idle.
+                if rx_buffer(WIDTH) = '1' then
                     -- Start new word
                     tmp_buffer := (1 => '1', 0 => i_mosi, others => '0');
                 else 

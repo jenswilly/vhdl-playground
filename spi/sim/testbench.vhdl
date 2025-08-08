@@ -10,32 +10,23 @@ architecture behavioral of testbench is
     signal i_miso : std_logic;
     signal ss_n : std_logic := '1';
     signal leds : std_logic_vector(0 to 1);
-    
+    signal ready : std_logic := '0';
+
     constant data_out : std_logic_vector(15 downto 0) := "0101010111001100";
     
     -- 12 MHz system clock
     signal clk_12mhz : std_logic := '0';
     constant HALF_PERIOD : time := 41.6665 ns; -- Half period for 12 MHz clock
-
-    component system is
-    port(
-        i_clk : in std_logic;
-        o_leds : out std_logic_vector(0 to 1);
-
-        -- SPI input
-        i_spi_clk : in std_logic;
-        i_spi_mosi : in std_logic;
-        i_spi_ss_n : in std_logic;
-        o_spi_miso : out std_logic
-    );        
-    end component system;
 begin
     clk_12mhz <= not clk_12mhz after HALF_PERIOD;
 
-    UUT: system 
+    UUT: entity work.system(arch) 
     port map (
         i_clk => clk_12mhz,
         o_leds => leds,
+        i_rst => '0',
+        o_ready => ready,
+
         i_spi_clk => sclk,
         i_spi_mosi => o_mosi,
         i_spi_ss_n => ss_n,
@@ -44,7 +35,7 @@ begin
     
     process
     begin
-        wait for 4000 ns; 
+        wait until ready = '1'; 
         
         -- Assert SS and shift out bit 0
         ss_n <= '0';
