@@ -35,7 +35,7 @@ port(
 end entity system;
 
 architecture arch of system is
-    constant RESOLUTION : positive := 180;  -- 181 degrees: from +90 (180) to -90 (0); 0 (90) is midpoint
+    constant RESOLUTION : positive := 200;
     
     -- Clock and reset signals
     signal clk_locked : std_logic;
@@ -46,45 +46,10 @@ architecture arch of system is
     signal spi_dr : std_logic;
     signal spi_data : std_logic_vector(15 downto 0);
     
-    -- FIFO signals
-    signal fifo_empty : std_logic;
-
- 
-    -- Edge detection for spi_dr because we only want to write to FIFO once per spi_dr pulse
-    signal spi_dr_prev : std_logic := '0';
-    signal spi_dr_pulse : std_logic := '0';
-
     -- Servo positions
-    signal pwm_bits : std_logic_vector(15 downto 0) := "0101101001011010";    -- Data read from FIFO. 
-    signal pwm_0_pos : integer range 0 to RESOLUTION := 90;
-    signal pwm_1_pos : integer range 0 to RESOLUTION := 90;
-    
-    -- From IP Sources/IP/fifo_0/Instantiation Template/fifo_0.vho
-    COMPONENT fifo_0
-      PORT (
-        clk : IN STD_LOGIC;
-        rst : IN STD_LOGIC;
-        din : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
-        wr_en : IN STD_LOGIC;
-        rd_en : IN STD_LOGIC;
-        dout : OUT STD_LOGIC_VECTOR(15 DOWNTO 0);
-        full : OUT STD_LOGIC;
-        empty : OUT STD_LOGIC 
-      );
-    END COMPONENT;
-                
+    signal pwm_0_pos : integer range 0 to 255 := 100;
+    signal pwm_1_pos : integer range 0 to 255 := 100;
 begin
-    -- Make sure we only have spi_dr_pulse high for one 48 MHz clock cycle
-    -- when spi_dr goes high (which might happen unsynchronized to the 48 MHz clock)
-    -- so we don't write spi_data to the FIFO more than once.
-    edge_detect: process(clk_48mhz)
-    begin
-        if rising_edge(clk_48mhz) then
-            spi_dr_prev <= spi_dr;
-            spi_dr_pulse <= spi_dr and not spi_dr_prev;
-        end if;
-    end process edge_detect;
-
     -- 48 MHz clock generation from the 12 MHz system clock
     -- (Not strictly necessary in our case...)
     clock_48mhz_inst : entity work.clock(arch)
@@ -117,18 +82,6 @@ begin
         o_data => spi_data
     );
 
-    -- FIFO instance
-    fifo_inst : fifo_0
-    port map (
-        clk => clk_48mhz,
-        rst => reset,
-        din => spi_data,
-        wr_en => spi_dr_pulse,
-        rd_en => not fifo_empty,
-        dout => pwm_bits,
-        empty => fifo_empty
-    );
-    
     -- PWM instances
     pwm_inst_0 : entity work.pwm(arch)
     generic map (
@@ -138,7 +91,7 @@ begin
     port map (
         i_clk => clk_48mhz,
         i_enable => not reset,
-        i_position => 90, -- Hardcoded for now
+        i_position => pwm_0_pos,
         o_pwm => o_servo(0)
     );
     
@@ -150,22 +103,36 @@ begin
     port map (
         i_clk => clk_48mhz,
         i_enable => not reset,
-        i_position => 90, -- Hardcoded for now
+        i_position => pwm_1_pos,
         o_pwm => o_servo(1)
     );
 
-    set_pwm_pos : process(reset, pwm_bits, fifo_empty)
+    set_pos : process(spi_dr, spi_data)
+        variable tmp0 : std_logic_vector(7 downto 0);
+        variable tmp1 : std_logic_vector(7 downto 0);
+        variable pos0 : integer range 0 to 255;
+        variable pos1 : integer range 0 to 255;
     begin
-        if not reset then
-            if rising_edge(fifo_empty) then -- fifo goes to empty again: data has been read
-                pwm_0_pos <= to_integer(unsigned(pwm_bits(15 downto 8)));
-                pwm_1_pos <= to_integer(unsigned(pwm_bits(7 downto 0)));
+        if spi_dr = '1' then
+            tmp0 := spi_data(15 downto 8);
+            pos0 := to_integer(unsigned(tmp0));
+            if pos0 > RESOLUTION then
+                pos0 := RESOLUTION;
             end if;
+            
+            tmp1 := spi_data(7 downto 0);
+            pos1 := to_integer(unsigned(tmp1));
+            if pos1 > RESOLUTION then
+                pos1 := RESOLUTION;
+            end if;
+            
+            pwm_0_pos <= pos0;
+            pwm_1_pos <= pos1;
         end if;
-    end process set_pwm_pos;
-    
+    end process;
+
     o_ready <= not reset;
-    o_leds(0) <= not fifo_empty;
+    o_leds(0) <= spi_dr;
     o_leds(1) <= clk_locked;
     
 end architecture arch;
