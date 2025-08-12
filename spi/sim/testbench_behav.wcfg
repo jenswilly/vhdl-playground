@@ -5,21 +5,20 @@
    <db_ref_list>
       <db_ref path="testbench_behav.wdb" id="1">
          <top_modules>
-            <top_module name="glbl" />
             <top_module name="testbench" />
          </top_modules>
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="20,309.609 ns"></ZoomStartTime>
-      <ZoomEndTime time="21,012.220 ns"></ZoomEndTime>
-      <Cursor1Time time="20,591.410 ns"></Cursor1Time>
+      <ZoomStartTime time="16.834002 us"></ZoomStartTime>
+      <ZoomEndTime time="21.485944 us"></ZoomEndTime>
+      <Cursor1Time time="22.487227 us"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="120"></NameColumnWidth>
+      <NameColumnWidth column_width="116"></NameColumnWidth>
       <ValueColumnWidth column_width="66"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="19" />
+   <WVObjectSize size="15" />
    <wvobject type="logic" fp_name="/testbench/sclk">
       <obj_property name="ElementShortName">sclk</obj_property>
       <obj_property name="ObjectShortName">sclk</obj_property>
@@ -48,10 +47,6 @@
       <obj_property name="ElementShortName">spi_data[15:0]</obj_property>
       <obj_property name="ObjectShortName">spi_data[15:0]</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/testbench/UUT/fifo_empty">
-      <obj_property name="ElementShortName">fifo_empty</obj_property>
-      <obj_property name="ObjectShortName">fifo_empty</obj_property>
-   </wvobject>
    <wvobject type="logic" fp_name="/testbench/UUT/clk_48mhz">
       <obj_property name="ElementShortName">clk_48mhz</obj_property>
       <obj_property name="ObjectShortName">clk_48mhz</obj_property>
@@ -64,10 +59,6 @@
       <obj_property name="ElementShortName">clk_locked</obj_property>
       <obj_property name="ObjectShortName">clk_locked</obj_property>
    </wvobject>
-   <wvobject type="logic" fp_name="/testbench/UUT/spi_dr_pulse">
-      <obj_property name="ElementShortName">spi_dr_pulse</obj_property>
-      <obj_property name="ObjectShortName">spi_dr_pulse</obj_property>
-   </wvobject>
    <wvobject type="logic" fp_name="/testbench/UUT/reset">
       <obj_property name="ElementShortName">reset</obj_property>
       <obj_property name="ObjectShortName">reset</obj_property>
@@ -75,14 +66,6 @@
    <wvobject type="logic" fp_name="/testbench/UUT/o_ready">
       <obj_property name="ElementShortName">o_ready</obj_property>
       <obj_property name="ObjectShortName">o_ready</obj_property>
-   </wvobject>
-   <wvobject type="logic" fp_name="/testbench/UUT/spi_dr_prev">
-      <obj_property name="ElementShortName">spi_dr_prev</obj_property>
-      <obj_property name="ObjectShortName">spi_dr_prev</obj_property>
-   </wvobject>
-   <wvobject type="array" fp_name="/testbench/UUT/pwm_bits">
-      <obj_property name="ElementShortName">pwm_bits[15:0]</obj_property>
-      <obj_property name="ObjectShortName">pwm_bits[15:0]</obj_property>
    </wvobject>
    <wvobject type="other" fp_name="/testbench/UUT/pwm_0_pos">
       <obj_property name="ElementShortName">pwm_0_pos</obj_property>
@@ -94,8 +77,8 @@
       <obj_property name="ObjectShortName">pwm_1_pos</obj_property>
       <obj_property name="Radix">HEXRADIX</obj_property>
    </wvobject>
-   <wvobject type="array" fp_name="/testbench/UUT/fifo_out">
-      <obj_property name="ElementShortName">fifo_out[15:0]</obj_property>
-      <obj_property name="ObjectShortName">fifo_out[15:0]</obj_property>
+   <wvobject type="logic" fp_name="/testbench/UUT/spi_busy">
+      <obj_property name="ElementShortName">spi_busy</obj_property>
+      <obj_property name="ObjectShortName">spi_busy</obj_property>
    </wvobject>
 </wave_config>

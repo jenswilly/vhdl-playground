@@ -29,6 +29,7 @@ begin
         if i_rst = '1' or ss_n = '1' then
             -- Reset bit bufffer on SS going active
             tmp_buffer := (0 => '1', others => '0');
+            o_dr <= '0';
         else
             if rising_edge(sclk) then  -- TODO: CPHA. 0 = sample on _from_ CLK idle; 1 = sample on _to_ CLK idle.
                 if rx_buffer(WIDTH) = '1' then
@@ -42,10 +43,11 @@ begin
         end if;
         
         rx_buffer <= tmp_buffer;
+
+        o_dr <= tmp_buffer(WIDTH);
+        o_data <= tmp_buffer(WIDTH-1 downto 0) when tmp_buffer(WIDTH) = '1' else (others => 'Z');
     end process spi;
 
     o_miso <= '0' when ss_n = '0' else 'Z'; -- High-Z when not selected 
-    o_dr <= rx_buffer(WIDTH) when ss_n = '0' else '0';
-    o_data <= rx_buffer(WIDTH-1 downto 0) when o_dr = '1' else (others => 'Z');
 
 end architecture arch;

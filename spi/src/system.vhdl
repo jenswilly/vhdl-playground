@@ -35,7 +35,7 @@ port(
 end entity system;
 
 architecture arch of system is
-    constant RESOLUTION : positive := 200;
+    constant RESOLUTION : positive := 255;
     
     -- Clock and reset signals
     signal clk_locked : std_logic;
@@ -45,10 +45,25 @@ architecture arch of system is
     -- SPI signals
     signal spi_dr : std_logic;
     signal spi_data : std_logic_vector(15 downto 0);
+    signal spi_busy : std_logic;
     
     -- Servo positions
-    signal pwm_0_pos : integer range 0 to 255 := 100;
-    signal pwm_1_pos : integer range 0 to 255 := 100;
+    signal pwm_0_pos : integer range 0 to 255 := 128;
+    signal pwm_1_pos : integer range 0 to 255 := 128;
+    
+    component spi_slave2 is
+    generic(
+        N                     : integer := 2;      -- number of bit to serialize
+        CPOL                  : std_logic := '0' );  -- clock polarity
+    port (
+        o_busy                      : out std_logic;  -- receiving data if '1'
+        i_data_parallel             : in  std_logic_vector(N-1 downto 0);  -- data to sent
+        o_data_parallel             : out std_logic_vector(N-1 downto 0);  -- received data
+        i_sclk                      : in  std_logic;
+        i_ss                        : in  std_logic;
+        i_mosi                      : in  std_logic;
+        o_miso                      : out std_logic);
+    end component spi_slave2;
 begin
     -- 48 MHz clock generation from the 12 MHz system clock
     -- (Not strictly necessary in our case...)
@@ -70,16 +85,30 @@ begin
     );
     
     -- SPI slave in only synchronized to the SPI clock
-    spi_inst : entity work.spi_slave(arch)
-    generic map ( WIDTH => 16 )
+    -- spi_inst : entity work.spi_slave(arch)
+    -- generic map ( WIDTH => 16 )
+    -- port map (
+    --     sclk => i_spi_clk,
+    --     i_mosi => i_spi_mosi,
+    --     o_miso => o_spi_miso,
+    --     ss_n => i_spi_ss_n,
+    --     i_rst => reset,
+    --     o_dr => spi_dr,
+    --     o_data => spi_data
+    -- );
+    spi_inst : spi_slave2
+    generic map (
+        N => 16,
+        CPOL => '0'
+    )
     port map (
-        sclk => i_spi_clk,
+        o_busy => spi_busy,
+        i_data_parallel => (others => '0'),
+        o_data_parallel => spi_data,
+        i_sclk => i_spi_clk,
+        i_ss => i_spi_ss_n,
         i_mosi => i_spi_mosi,
-        o_miso => o_spi_miso,
-        ss_n => i_spi_ss_n,
-        i_rst => reset,
-        o_dr => spi_dr,
-        o_data => spi_data
+        o_miso => o_spi_miso
     );
 
     -- PWM instances
@@ -107,13 +136,14 @@ begin
         o_pwm => o_servo(1)
     );
 
-    set_pos : process(spi_dr, spi_data)
+    set_pos : process(spi_dr, spi_busy, spi_data)
         variable tmp0 : std_logic_vector(7 downto 0);
         variable tmp1 : std_logic_vector(7 downto 0);
         variable pos0 : integer range 0 to 255;
         variable pos1 : integer range 0 to 255;
     begin
-        if spi_dr = '1' then
+        -- if spi_dr = '1' then
+        if falling_edge(spi_busy) then
             tmp0 := spi_data(15 downto 8);
             pos0 := to_integer(unsigned(tmp0));
             if pos0 > RESOLUTION then
