@@ -30,7 +30,7 @@ end entity reset;
 architecture arch of reset is
     signal reset_sync : std_logic_vector(2 downto 0) := "000";
 begin
-    reset : process(i_clk)
+    reset : process(i_clk, i_clk_locked)
     begin
         if (i_clk_locked = '0' or i_reset = '1') then
             -- Keep in reset until clock manager is locked and stable and external reset is de-asserted

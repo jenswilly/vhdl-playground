@@ -5,7 +5,8 @@ entity top is
     port (
         sysclk : in std_logic;
         led : out std_logic_vector(0 to 1);
-        ja : in std_logic_vector(0 to 5);  -- PMOD connector
+        ja : in std_logic_vector(0 to 2);       -- PMOD connector for SPI
+        servo : out std_logic_vector(0 to 1);   -- GPIO connectors for servo
         btn : in std_logic_vector(0 to 1);
         led0_r : out std_logic;
         led0_g : out std_logic;
@@ -26,7 +27,7 @@ begin
         o_leds => led,
         i_rst => btn(0),
         o_ready => open,    -- Don't care
-        o_servo => ja(4 to 5),
+        o_servo => servo,
         i_spi_clk => ja(0),
         i_spi_mosi => ja(1),
         i_spi_ss_n => ja(2)
