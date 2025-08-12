@@ -5,3 +5,4 @@ vivado*.str
 *.dcp
 
 .Xil/
+.DS_Store
