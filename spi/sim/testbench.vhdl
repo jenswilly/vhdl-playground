@@ -13,7 +13,7 @@ architecture behavioral of testbench is
     signal ready : std_logic := '0';
     signal servos : std_logic_vector(0 to 1);
 
-    constant data_out : std_logic_vector(15 downto 0) := "0110010010000000";
+    constant data_out : std_logic_vector(15 downto 0) := "0110010010000011";
     
     -- 12 MHz system clock
     signal clk_12mhz : std_logic := '0';

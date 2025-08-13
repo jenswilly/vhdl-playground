@@ -45,7 +45,6 @@ architecture arch of system is
     -- SPI signals
     signal spi_dr : std_logic;
     signal spi_data : std_logic_vector(15 downto 0);
-    signal spi_busy : std_logic;
     
     -- Servo positions
     signal pwm_0_pos : integer range 0 to 255 := 128;
@@ -85,30 +84,16 @@ begin
     );
     
     -- SPI slave in only synchronized to the SPI clock
-    -- spi_inst : entity work.spi_slave(arch)
-    -- generic map ( WIDTH => 16 )
-    -- port map (
-    --     sclk => i_spi_clk,
-    --     i_mosi => i_spi_mosi,
-    --     o_miso => o_spi_miso,
-    --     ss_n => i_spi_ss_n,
-    --     i_rst => reset,
-    --     o_dr => spi_dr,
-    --     o_data => spi_data
-    -- );
-    spi_inst : spi_slave2
-    generic map (
-        N => 16,
-        CPOL => '0'
-    )
+    spi_inst : entity work.spi_slave4(arch)
+    generic map ( WIDTH => 16 )
     port map (
-        o_busy => spi_busy,
-        i_data_parallel => (others => '0'),
-        o_data_parallel => spi_data,
-        i_sclk => i_spi_clk,
-        i_ss => i_spi_ss_n,
+        sclk => i_spi_clk,
         i_mosi => i_spi_mosi,
-        o_miso => o_spi_miso
+        o_miso => o_spi_miso,
+        ss_n => i_spi_ss_n,
+        i_rst => reset,
+        o_dr => spi_dr,
+        o_data => spi_data
     );
 
     -- PWM instances
@@ -136,28 +121,12 @@ begin
         o_pwm => o_servo(1)
     );
 
-    set_pos : process(spi_dr, spi_busy, spi_data)
-        variable tmp0 : std_logic_vector(7 downto 0);
-        variable tmp1 : std_logic_vector(7 downto 0);
-        variable pos0 : integer range 0 to 255;
-        variable pos1 : integer range 0 to 255;
+    -- Update servo positions when spi_dr goes high
+    set_pos : process(spi_dr)
     begin
-        -- if spi_dr = '1' then
-        if falling_edge(spi_busy) then
-            tmp0 := spi_data(15 downto 8);
-            pos0 := to_integer(unsigned(tmp0));
-            if pos0 > RESOLUTION then
-                pos0 := RESOLUTION;
-            end if;
-            
-            tmp1 := spi_data(7 downto 0);
-            pos1 := to_integer(unsigned(tmp1));
-            if pos1 > RESOLUTION then
-                pos1 := RESOLUTION;
-            end if;
-            
-            pwm_0_pos <= pos0;
-            pwm_1_pos <= pos1;
+        if rising_edge(spi_dr) then
+            pwm_0_pos <= to_integer(unsigned(spi_data(15 downto 8)));
+            pwm_1_pos <= to_integer(unsigned(spi_data(7 downto 0)));
         end if;
     end process;
 

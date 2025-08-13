@@ -3,7 +3,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 -- https://en.wikipedia.org/wiki/Serial_Peripheral_Interface
 
-entity spi_slave is
+entity spi_slave0 is
     generic (
         WIDTH : positive := 8
     );
@@ -17,9 +17,9 @@ entity spi_slave is
         o_dr : out std_logic;   -- Data ready: one full width of data has been received
         o_data : out std_logic_vector(WIDTH-1 downto 0)
     );        
-end entity spi_slave;
+end entity spi_slave0;
 
-architecture arch of spi_slave is
+architecture arch of spi_slave0 is
     signal rx_buffer : std_logic_vector(WIDTH downto 0);
 begin
 
