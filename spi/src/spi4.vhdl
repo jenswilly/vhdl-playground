@@ -29,23 +29,18 @@ begin
         if i_rst = '1' or ss_n = '1' then
             rx_buffer <= (0 => '1', others => '0');
             o_dr <= '0';
-            o_data <= (others => '0');
         elsif rising_edge(sclk) then
+            -- Default: shift in new bit, o_dr low, o_data don't care (keep)
+            o_dr <= '0';
+            rx_buffer <= rx_buffer(WIDTH-1 downto 0) & i_mosi;
+
             if rx_buffer(WIDTH) = '1' then
-                -- 1) Starting new word. Data was captured last iteration
+                -- Starting new word. Data was captured last iteration
                 rx_buffer <= (1 => '1', 0 => i_mosi, others => '0');
-                o_dr <= '0';
-                o_data <= (others => '0');
             elsif rx_buffer(WIDTH - 1) = '1' then
-                -- 2) About to shift in last bit
-                rx_buffer <= rx_buffer(WIDTH-1 downto 0) & i_mosi;
+                -- About to shift in last bit: set o_dr and o_data
                 o_dr <= '1';
                 o_data <= rx_buffer(WIDTH-2 downto 0) & i_mosi;
-            else
-                -- 3) Shift bit in
-                rx_buffer <= rx_buffer(WIDTH-1 downto 0) & i_mosi;
-                o_dr <= '0';
-                o_data <= (others => '0');
             end if;
         end if;
     end process spi;
