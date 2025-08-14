@@ -2,8 +2,9 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
 -- https://en.wikipedia.org/wiki/Serial_Peripheral_Interface
+-- TODO: CPOL/CPHA
 
-entity spi_slave1 is
+entity spi_slave is
     generic (
         WIDTH : positive := 8
     );
@@ -17,39 +18,33 @@ entity spi_slave1 is
         o_dr : out std_logic;   -- Data ready: one full width of data has been received
         o_data : out std_logic_vector(WIDTH-1 downto 0)
     );        
-end entity spi_slave1;
+end entity spi_slave;
 
-architecture arch of spi_slave1 is
+architecture arch of spi_slave is
+    signal rx_buffer : std_logic_vector(WIDTH downto 0);
 begin
 
     spi : process(sclk, ss_n)
-        variable rx_buffer : std_logic_vector(WIDTH downto 0); -- Use variable for immediate updates
     begin
         if i_rst = '1' or ss_n = '1' then
-            -- Reset on SS going inactive
-            rx_buffer := (0 => '1', others => '0');
+            rx_buffer <= (0 => '1', others => '0');
             o_dr <= '0';
-            o_data <= (others => '0');
-        elsif rising_edge(sclk) then  -- TODO: CPHA. 0 = sample on _from_ CLK idle; 1 = sample on _to_ CLK idle.
+        elsif rising_edge(sclk) then
+            -- Default: shift in new bit, o_dr low, o_data don't care (keep)
             o_dr <= '0';
-            o_data <= (others => '0');
+            rx_buffer <= rx_buffer(WIDTH-1 downto 0) & i_mosi;
 
             if rx_buffer(WIDTH) = '1' then
-                -- Start new word. The old one has already been captured.
-                rx_buffer := (1 => '1', 0 => i_mosi, others => '0');
-            else 
-                rx_buffer := rx_buffer(WIDTH-1 downto 0) & i_mosi; -- Sample and shift
-
-                -- Check if we have a full word
-                if rx_buffer(WIDTH) = '1' then
-                    -- Might this cause timing issues?
-                    o_dr <= '1';  -- Set data ready flag
-                    o_data <= rx_buffer(WIDTH-1 downto 0); -- Output the received data
-                end if;
+                -- Starting new word. Data was captured last iteration
+                rx_buffer <= (1 => '1', 0 => i_mosi, others => '0');
+            elsif rx_buffer(WIDTH - 1) = '1' then
+                -- About to shift in last bit: set o_dr and o_data
+                o_dr <= '1';
+                o_data <= rx_buffer(WIDTH-2 downto 0) & i_mosi;
             end if;
         end if;
     end process spi;
 
-    o_miso <= '0' when ss_n = '0' else 'Z'; -- High-Z when not selected 
+    o_miso <= '0' when ss_n = '0' else 'Z'; 
 
 end architecture arch;

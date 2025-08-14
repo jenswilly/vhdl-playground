@@ -47,8 +47,8 @@ architecture arch of system is
     signal spi_data : std_logic_vector(15 downto 0);
     
     -- Servo positions
-    signal pwm_0_pos : integer range 0 to 255 := 128;
-    signal pwm_1_pos : integer range 0 to 255 := 128;
+    signal pwm_0_pos : integer range 0 to 255;
+    signal pwm_1_pos : integer range 0 to 255;
     
     component spi_slave2 is
     generic(
@@ -84,7 +84,7 @@ begin
     );
     
     -- SPI slave in only synchronized to the SPI clock
-    spi_inst : entity work.spi_slave4(arch)
+    spi_inst : entity work.spi_slave(arch)
     generic map ( WIDTH => 16 )
     port map (
         sclk => i_spi_clk,
@@ -122,9 +122,13 @@ begin
     );
 
     -- Update servo positions when spi_dr goes high
-    set_pos : process(spi_dr)
+    set_pos : process(reset, spi_dr)
     begin
-        if rising_edge(spi_dr) then
+        if reset = '1' then
+            -- Values when in reset
+            pwm_0_pos <= 128;
+            pwm_1_pos <= 128;
+        elsif rising_edge(spi_dr) then
             pwm_0_pos <= to_integer(unsigned(spi_data(15 downto 8)));
             pwm_1_pos <= to_integer(unsigned(spi_data(7 downto 0)));
         end if;
