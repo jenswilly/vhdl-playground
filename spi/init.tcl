@@ -18,12 +18,12 @@ set_property used_in_simulation false [get_files top_syn.vhdl]
 update_compile_order -fileset sources_1
 
 # Add IP sources
-puts "--- Adding IP Sources ---\n"
-add_files -fileset sources_1 ./ip/fifo_0.xci
-catch { config_ip_cache -export [get_ips -all fifo_0] }
-export_ip_user_files -of_objects [get_files ./ip/fifo_0.xci] -no_script -sync -force -quiet
-generate_target {instantiation_template} [get_files ./ip/fifo_0.xci]
-update_compile_order -fileset sources_1
+#puts "--- Adding IP Sources ---\n"
+#add_files -fileset sources_1 ./ip/fifo_0.xci
+#catch { config_ip_cache -export [get_ips -all fifo_0] }
+#export_ip_user_files -of_objects [get_files ./ip/fifo_0.xci] -no_script -sync -force -quiet
+#generate_target {instantiation_template} [get_files ./ip/fifo_0.xci]
+#update_compile_order -fileset sources_1
 
 # Add constraint files
 puts "--- Adding Constraints Files ---\n"
@@ -32,7 +32,7 @@ add_files -fileset constrs_1 ./constraints/cmod-a7-master.xdc
 # Add simulation files
 puts "--- Adding Simulation Sources ---\n"
 add_files -fileset sim_1 ./sim/testbench.vhdl
-add_files -fileset sim_1 ./simtestbench_behav.wcfg
+add_files -fileset sim_1 ./sim/testbench_behav.wcfg
 set_property FILE_TYPE {VHDL 2008} [get_files testbench.vhdl]
 set_property used_in_synthesis false [get_files testbench.vhdl]
 set_property xsim.view ./sim/testbench_behav.wcfg [get_filesets sim_1]
