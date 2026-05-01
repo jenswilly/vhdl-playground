@@ -8,6 +8,7 @@ set_property STEPS.WRITE_BITSTREAM.ARGS.BIN_FILE true [get_runs impl_1]
 # Add source files
 puts "--- Adding Design Sources ---\n"
 add_files -fileset sources_1 ./hdl/top_syn.vhd
+add_files -fileset sources_1 ./hdl/reset.vhd
 add_files -fileset sources_1 ./hdl/ethernet.vhd
 set_property FILE_TYPE {VHDL 2008} [get_files *.vhd]
 set_property used_in_simulation false [get_files top_syn.vhd]
@@ -36,4 +37,4 @@ puts "--- No Simulation Sources ---\n"
 # set_property xsim.view ./sim/testbench_behav.wcfg [get_filesets sim_1]
 # set_property -name {xsim.simulate.runtime} -value {22us} -objects [get_filesets sim_1]
 
-puts "Project setup complete. Open project by running 'source open.sh'"
+puts "Project setup complete. Open project by running './open.sh'"

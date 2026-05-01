@@ -44,7 +44,7 @@ end entity ethernet;
 
 architecture arch of ethernet is
 begin
-    i_FC_1002_MII : FC1002_MII
+    i_FC_1001_MII : FC1001_MII
     port map (
         Clk             => Clk,
         Reset           => Reset,
