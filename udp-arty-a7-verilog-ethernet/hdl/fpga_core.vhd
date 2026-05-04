@@ -284,16 +284,16 @@ architecture rtl of fpga_core is
             s_axis_tvalid     : in  std_logic;
             s_axis_tready     : out std_logic;
             s_axis_tlast      : in  std_logic;
-            s_axis_tid        : in  std_logic_vector(0 downto 0);
-            s_axis_tdest      : in  std_logic_vector(0 downto 0);
+            s_axis_tid        : in  std_logic_vector(7 downto 0);
+            s_axis_tdest      : in  std_logic_vector(7 downto 0);
             s_axis_tuser      : in  std_logic_vector(USER_WIDTH-1 downto 0);
             m_axis_tdata      : out std_logic_vector(DATA_WIDTH-1 downto 0);
             m_axis_tkeep      : out std_logic_vector((DATA_WIDTH/8)-1 downto 0);
             m_axis_tvalid     : out std_logic;
             m_axis_tready     : in  std_logic;
             m_axis_tlast      : out std_logic;
-            m_axis_tid        : out std_logic_vector(0 downto 0);
-            m_axis_tdest      : out std_logic_vector(0 downto 0);
+            m_axis_tid        : out std_logic_vector(7 downto 0);
+            m_axis_tdest      : out std_logic_vector(7 downto 0);
             m_axis_tuser      : out std_logic_vector(USER_WIDTH-1 downto 0);
             status_overflow   : out std_logic;
             status_bad_frame  : out std_logic;
@@ -423,13 +423,13 @@ architecture rtl of fpga_core is
     signal rx_fifo_udp_payload_axis_tvalid : std_logic;
     signal rx_fifo_udp_payload_axis_tready : std_logic;
     signal rx_fifo_udp_payload_axis_tlast  : std_logic;
-    signal rx_fifo_udp_payload_axis_tuser  : std_logic_vector(0 downto 0);
+    signal rx_fifo_udp_payload_axis_tuser  : std_logic;
 
     signal tx_fifo_udp_payload_axis_tdata  : std_logic_vector(7 downto 0);
     signal tx_fifo_udp_payload_axis_tvalid : std_logic;
     signal tx_fifo_udp_payload_axis_tready : std_logic;
     signal tx_fifo_udp_payload_axis_tlast  : std_logic;
-    signal tx_fifo_udp_payload_axis_tuser  : std_logic_vector(0 downto 0);
+    signal tx_fifo_udp_payload_axis_tuser  : std_logic;
 
     constant local_mac   : std_logic_vector(47 downto 0) := x"020000000000";
     constant local_ip    : std_logic_vector(31 downto 0) := x"C0A80180";
@@ -478,13 +478,13 @@ begin
     tx_udp_payload_axis_tvalid <= tx_fifo_udp_payload_axis_tvalid;
     tx_fifo_udp_payload_axis_tready <= tx_udp_payload_axis_tready;
     tx_udp_payload_axis_tlast <= tx_fifo_udp_payload_axis_tlast;
-    tx_udp_payload_axis_tuser <= tx_fifo_udp_payload_axis_tuser(0);
+    tx_udp_payload_axis_tuser <= tx_fifo_udp_payload_axis_tuser;
 
     rx_fifo_udp_payload_axis_tdata <= rx_udp_payload_axis_tdata;
     rx_fifo_udp_payload_axis_tvalid <= rx_udp_payload_axis_tvalid and match_cond_reg;
     rx_udp_payload_axis_tready <= (rx_fifo_udp_payload_axis_tready and match_cond_reg) or no_match_reg;
     rx_fifo_udp_payload_axis_tlast <= rx_udp_payload_axis_tlast;
-    rx_fifo_udp_payload_axis_tuser(0) <= rx_udp_payload_axis_tuser;
+    rx_fifo_udp_payload_axis_tuser <= rx_udp_payload_axis_tuser;
 
     led0_r <= '0';
     led0_b <= '0';
@@ -781,9 +781,9 @@ begin
             s_axis_tvalid => rx_fifo_udp_payload_axis_tvalid,
             s_axis_tready => rx_fifo_udp_payload_axis_tready,
             s_axis_tlast => rx_fifo_udp_payload_axis_tlast,
-            s_axis_tid => "0",
-            s_axis_tdest => "0",
-            s_axis_tuser => rx_fifo_udp_payload_axis_tuser,
+            s_axis_tid => (others => '0'),
+            s_axis_tdest => (others => '0'),
+            s_axis_tuser(0) => rx_fifo_udp_payload_axis_tuser,
             m_axis_tdata => tx_fifo_udp_payload_axis_tdata,
             m_axis_tkeep => open,
             m_axis_tvalid => tx_fifo_udp_payload_axis_tvalid,
@@ -791,7 +791,7 @@ begin
             m_axis_tlast => tx_fifo_udp_payload_axis_tlast,
             m_axis_tid => open,
             m_axis_tdest => open,
-            m_axis_tuser => tx_fifo_udp_payload_axis_tuser,
+            m_axis_tuser(0) => tx_fifo_udp_payload_axis_tuser,
             status_overflow => open,
             status_bad_frame => open,
             status_good_frame => open
