@@ -301,6 +301,24 @@ architecture rtl of fpga_core is
         );
     end component;
 
+    component uart_tx is
+        generic (
+            BIT_RATE      : integer := 9600;
+            CLK_HZ        : integer := 50_000_000;
+            PAYLOAD_BITS  : integer := 8;
+            STOP_BITS     : integer := 1
+
+        );
+        port (
+            clk          : in  std_logic;
+            resetn       : in  std_logic;
+            uart_txd     : out std_logic;
+            uart_tx_busy : out std_logic;
+            uart_tx_en   : in  std_logic;
+            uart_tx_data : in  std_logic_vector(PAYLOAD_BITS-1 downto 0)
+        );
+    end component;
+
     signal rx_axis_tdata              : std_logic_vector(7 downto 0);
     signal rx_axis_tvalid             : std_logic;
     signal rx_axis_tready             : std_logic;
@@ -440,8 +458,22 @@ architecture rtl of fpga_core is
     signal no_match       : std_logic;
     signal match_cond_reg : std_logic := '0';
     signal no_match_reg   : std_logic := '0';
-    signal valid_last     : std_logic := '0';
+    signal first_byte_received     : std_logic := '0';
     signal led_reg        : std_logic_vector(7 downto 0) := (others => '0');
+
+    -- UART signals
+    signal uart_tx_en   : std_logic;
+    signal uart_tx_data : std_logic_vector(7 downto 0);
+    signal uart_tx_busy : std_logic;
+
+    -- UART payload FIFO signals
+    signal uart_fifo_s_tvalid : std_logic;
+    signal uart_fifo_s_tready : std_logic;
+    signal uart_fifo_m_tdata  : std_logic_vector(7 downto 0);
+    signal uart_fifo_m_tvalid : std_logic;
+    signal uart_fifo_m_tready : std_logic;
+    signal uart_fifo_m_tlast  : std_logic;
+
 begin
     match_cond <= '1' when rx_udp_dest_port = x"04D2" else '0'; -- 1234
     no_match <= not match_cond;
@@ -482,9 +514,11 @@ begin
 
     rx_fifo_udp_payload_axis_tdata <= rx_udp_payload_axis_tdata;
     rx_fifo_udp_payload_axis_tvalid <= rx_udp_payload_axis_tvalid and match_cond_reg;
-    rx_udp_payload_axis_tready <= (rx_fifo_udp_payload_axis_tready and match_cond_reg) or no_match_reg;
+    rx_udp_payload_axis_tready <= ((rx_fifo_udp_payload_axis_tready and uart_fifo_s_tready) and match_cond_reg) or no_match_reg;
     rx_fifo_udp_payload_axis_tlast <= rx_udp_payload_axis_tlast;
     rx_fifo_udp_payload_axis_tuser <= rx_udp_payload_axis_tuser;
+    uart_fifo_s_tvalid <= rx_udp_payload_axis_tvalid and match_cond_reg;
+    uart_fifo_m_tready <= uart_tx_en;
 
     led0_r <= '0';
     led0_b <= '0';
@@ -503,7 +537,6 @@ begin
     led6 <= led_reg(1);
     led7 <= led_reg(0);
     phy_reset_n <= not rst;
-    uart_txd <= '0';
 
     process (clk)
     begin
@@ -526,26 +559,60 @@ begin
         end if;
     end process;
 
+    -- LED process: copy first byte of UDP payload to LEDs when a packet is received
     process (clk)
     begin
         if rising_edge(clk) then
             if rst = '1' then
                 led_reg <= (others => '0');
-                valid_last <= '0';
+                first_byte_received <= '0';
             else
                 if tx_udp_payload_axis_tvalid = '1' then
-                    if valid_last = '0' then
+                    -- If receiving the first byte of the packet, copy it to the LED register
+                    if first_byte_received = '0' then
                         led_reg <= tx_udp_payload_axis_tdata;
-                        valid_last <= '1';
+                        first_byte_received <= '1';
                     end if;
 
+                    -- Reset the first_byte_received flag when the end of the packet is reached
                     if tx_udp_payload_axis_tlast = '1' then
-                        valid_last <= '0';
+                        first_byte_received <= '0';
                     end if;
                 end if;
             end if;
         end if;
     end process;
+
+    -- UART process: forward bytes from UART FIFO to UART transmitter
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if rst = '1' then
+                uart_tx_en   <= '0';
+                uart_tx_data <= (others => '0');
+            else
+                uart_tx_en <= '0';
+                if uart_fifo_m_tvalid = '1' and uart_tx_busy = '0' and uart_tx_en = '0' then
+                    uart_tx_en   <= '1';
+                    uart_tx_data <= uart_fifo_m_tdata;
+                end if;
+            end if;
+        end if;
+    end process;
+
+    uart_tx_inst : uart_tx
+        generic map (
+            BIT_RATE => 115_200,
+            CLK_HZ => 125_000_000
+        )
+        port map (
+            clk => clk,
+            resetn => not rst,
+            uart_txd => uart_txd,
+            uart_tx_busy => uart_tx_busy,
+            uart_tx_en => uart_tx_en,
+            uart_tx_data => uart_tx_data
+        );
 
     eth_mac_inst : eth_mac_mii_fifo
         generic map (
@@ -794,6 +861,41 @@ begin
             m_axis_tuser(0) => tx_fifo_udp_payload_axis_tuser,
             status_overflow => open,
             status_bad_frame => open,
+            status_good_frame => open
+        );
+
+    uart_payload_fifo : axis_fifo
+        generic map (
+            DEPTH       => 8192,
+            DATA_WIDTH  => 8,
+            KEEP_ENABLE => 0,
+            ID_ENABLE   => 0,
+            DEST_ENABLE => 0,
+            USER_ENABLE => 1,
+            USER_WIDTH  => 1,
+            FRAME_FIFO  => 0
+        )
+        port map (
+            clk               => clk,
+            rst               => rst,
+            s_axis_tdata      => rx_udp_payload_axis_tdata,
+            s_axis_tkeep      => "0",
+            s_axis_tvalid     => uart_fifo_s_tvalid,
+            s_axis_tready     => uart_fifo_s_tready,
+            s_axis_tlast      => rx_udp_payload_axis_tlast,
+            s_axis_tid        => (others => '0'),
+            s_axis_tdest      => (others => '0'),
+            s_axis_tuser      => (others => '0'),
+            m_axis_tdata      => uart_fifo_m_tdata,
+            m_axis_tkeep      => open,
+            m_axis_tvalid     => uart_fifo_m_tvalid,
+            m_axis_tready     => uart_fifo_m_tready,
+            m_axis_tlast      => uart_fifo_m_tlast,
+            m_axis_tid        => open,
+            m_axis_tdest      => open,
+            m_axis_tuser      => open,
+            status_overflow   => open,
+            status_bad_frame  => open,
             status_good_frame => open
         );
 end architecture rtl;
