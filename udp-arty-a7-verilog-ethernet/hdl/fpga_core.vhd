@@ -431,10 +431,10 @@ architecture rtl of fpga_core is
     signal tx_fifo_udp_payload_axis_tlast  : std_logic;
     signal tx_fifo_udp_payload_axis_tuser  : std_logic;
 
-    constant local_mac   : std_logic_vector(47 downto 0) := x"020000000000";
-    constant local_ip    : std_logic_vector(31 downto 0) := x"C0A80180";
-    constant gateway_ip  : std_logic_vector(31 downto 0) := x"C0A80101";
-    constant subnet_mask : std_logic_vector(31 downto 0) := x"FFFFFF00";
+    constant local_mac   : std_logic_vector(47 downto 0) := x"02_00_00_00_00_00";
+    constant local_ip    : std_logic_vector(31 downto 0) := x"C0_A8_01_80";    -- 192.168.1.128
+    constant gateway_ip  : std_logic_vector(31 downto 0) := x"C0_A8_01_01";    -- 192 168 1 1
+    constant subnet_mask : std_logic_vector(31 downto 0) := x"FF_FF_FF_00";
 
     signal match_cond     : std_logic;
     signal no_match       : std_logic;
@@ -443,7 +443,7 @@ architecture rtl of fpga_core is
     signal valid_last     : std_logic := '0';
     signal led_reg        : std_logic_vector(7 downto 0) := (others => '0');
 begin
-    match_cond <= '1' when rx_udp_dest_port = x"04D2" else '0';
+    match_cond <= '1' when rx_udp_dest_port = x"04D2" else '0'; -- 1234
     no_match <= not match_cond;
 
     rx_ip_hdr_ready <= '1';
