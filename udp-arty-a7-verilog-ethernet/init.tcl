@@ -10,6 +10,10 @@ puts "--- Adding Design Sources ---\n"
 add_files -fileset sources_1 \
     ./third_party/verilog_ethernet/example/Arty/fpga/rtl/fpga.v \
     ./hdl/fpga_core.vhd \
+    ./hdl/uart_tx.v
+set_property FILE_TYPE {VHDL 2008} [get_files *.vhd]
+
+add_files -fileset sources_1 \
     ./third_party/verilog_ethernet/example/Arty/fpga/rtl/debounce_switch.v \
     ./third_party/verilog_ethernet/example/Arty/fpga/rtl/sync_signal.v \
     ./third_party/verilog_ethernet/example/Arty/fpga/lib/eth/rtl/ssio_sdr_in.v \
@@ -45,7 +49,7 @@ add_files -fileset sources_1 \
     ./third_party/verilog_ethernet/example/Arty/fpga/lib/eth/lib/axis/rtl/sync_reset.v
 set_property top fpga [current_fileset]
 update_compile_order -fileset sources_1
-# set_property FILE_TYPE {VHDL 2008} [get_files *.vhd]
+
 # set_property used_in_simulation false [get_files top_syn.vhd]
 
 # Add IP sources
