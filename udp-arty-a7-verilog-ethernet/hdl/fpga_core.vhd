@@ -471,7 +471,7 @@ architecture rtl of fpga_core is
     signal uart_fifo_s_tready : std_logic;
     signal uart_fifo_m_tdata  : std_logic_vector(7 downto 0);
     signal uart_fifo_m_tvalid : std_logic;
-    signal uart_fifo_m_tready : std_logic;
+    -- uart_fifo_m_tready = uart_tx_en;
     signal uart_fifo_m_tlast  : std_logic;
 
 begin
@@ -518,7 +518,6 @@ begin
     rx_fifo_udp_payload_axis_tlast <= rx_udp_payload_axis_tlast;
     rx_fifo_udp_payload_axis_tuser <= rx_udp_payload_axis_tuser;
     uart_fifo_s_tvalid <= rx_udp_payload_axis_tvalid and match_cond_reg;
-    uart_fifo_m_tready <= uart_tx_en;
 
     led0_r <= '0';
     led0_b <= '0';
@@ -593,6 +592,8 @@ begin
             else
                 uart_tx_en <= '0';
                 if uart_fifo_m_tvalid = '1' and uart_tx_busy = '0' and uart_tx_en = '0' then
+                    -- uart_tx_en is pulsed for one clock cycle when data is valid and the transmitter is not busy
+                    -- this will read one byte from the FIFO and send it to the UART transmitter
                     uart_tx_en   <= '1';
                     uart_tx_data <= uart_fifo_m_tdata;
                 end if;
@@ -852,18 +853,18 @@ begin
             s_axis_tdest => (others => '0'),
             s_axis_tuser(0) => rx_fifo_udp_payload_axis_tuser,
             m_axis_tdata => tx_fifo_udp_payload_axis_tdata,
-            m_axis_tkeep => open,
             m_axis_tvalid => tx_fifo_udp_payload_axis_tvalid,
             m_axis_tready => tx_fifo_udp_payload_axis_tready,
             m_axis_tlast => tx_fifo_udp_payload_axis_tlast,
-            m_axis_tid => open,
-            m_axis_tdest => open,
-            m_axis_tuser(0) => tx_fifo_udp_payload_axis_tuser,
-            status_overflow => open,
-            status_bad_frame => open,
-            status_good_frame => open
+            m_axis_tuser(0) => tx_fifo_udp_payload_axis_tuser
         );
 
+    -- The UART FIFO is filled with the UDP payload data from the rx_fifo_udp_payload_axis
+    -- when UDP has data and port number matches (rx_udp_payload_axis_tvalid and match_cond_reg)
+    --
+    -- FIFO output is connected to the UART transmitter. New data is read when the FIFO has 
+    -- valid data (uart_fifo_m_tvalid) and the UART transmitter is not busy (uart_tx_busy = '0') and 
+    -- we are not already enabling a transmission (uart_tx_en = '0').
     uart_payload_fifo : axis_fifo
         generic map (
             DEPTH       => 8192,
@@ -887,15 +888,8 @@ begin
             s_axis_tdest      => (others => '0'),
             s_axis_tuser      => (others => '0'),
             m_axis_tdata      => uart_fifo_m_tdata,
-            m_axis_tkeep      => open,
             m_axis_tvalid     => uart_fifo_m_tvalid,
-            m_axis_tready     => uart_fifo_m_tready,
-            m_axis_tlast      => uart_fifo_m_tlast,
-            m_axis_tid        => open,
-            m_axis_tdest      => open,
-            m_axis_tuser      => open,
-            status_overflow   => open,
-            status_bad_frame  => open,
-            status_good_frame => open
+            m_axis_tready     => uart_tx_en,     -- on rising clock: if uart_fifo_m_tvalid = '1' and uart_tx_busy = '0' and uart_tx_en = '0'
+            m_axis_tlast      => uart_fifo_m_tlast
         );
 end architecture rtl;

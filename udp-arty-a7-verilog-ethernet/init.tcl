@@ -8,12 +8,12 @@ set_property STEPS.WRITE_BITSTREAM.ARGS.BIN_FILE true [get_runs impl_1]
 # Add source files
 puts "--- Adding Design Sources ---\n"
 add_files -fileset sources_1 \
-    ./third_party/verilog_ethernet/example/Arty/fpga/rtl/fpga.v \
     ./hdl/fpga_core.vhd \
     ./hdl/uart_tx.v
 set_property FILE_TYPE {VHDL 2008} [get_files *.vhd]
 
 add_files -fileset sources_1 \
+    ./third_party/verilog_ethernet/example/Arty/fpga/rtl/fpga.v \
     ./third_party/verilog_ethernet/example/Arty/fpga/rtl/debounce_switch.v \
     ./third_party/verilog_ethernet/example/Arty/fpga/rtl/sync_signal.v \
     ./third_party/verilog_ethernet/example/Arty/fpga/lib/eth/rtl/ssio_sdr_in.v \
