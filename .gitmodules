@@ -1,3 +1,6 @@
 [submodule "udp-arty-a7-verilog-ethernet/third_party/verilog_ethernet"]
 	path = udp-arty-a7-verilog-ethernet/third_party/verilog_ethernet
 	url = https://github.com/alexforencich/verilog-ethernet.git
+[submodule "spi-uart-arty-a7/third_party/verilog-ethernet"]
+	path = spi-uart-arty-a7/third_party/verilog-ethernet
+	url = https://github.com/alexforencich/verilog-ethernet.git
