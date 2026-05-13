@@ -29,9 +29,9 @@ entity top is
 
         uart_txd    : out std_logic;
 
-        gpio_ja1    : in  std_logic;       -- PMOD connector for SPI
-        gpio_ja2    : in  std_logic;
-        gpio_ja3    : in  std_logic
+        spi_sclk    : in  std_logic;
+        spi_ss_n    : in  std_logic;
+        spi_mosi    : in  std_logic
     );
 end entity top;
 
@@ -40,18 +40,11 @@ architecture rtl of top is
     signal clk_locked       : std_logic;
     signal reset            : std_logic; -- Active high reset for everything except the clock generator
     signal clk_spi_int      : std_logic; -- SPI clock domain
-    signal n_reset_n        : std_logic;
-
-    signal spi_sclk : std_logic;
-    signal spi_ss_n : std_logic;
-    signal spi_mosi : std_logic;
+    signal reset            : std_logic; -- Inverted reset for the core (active low)
 
 begin
-    n_reset_n <= not reset_n;
-    spi_ss_n <= gpio_ja3;
-    spi_mosi <= gpio_ja2;
-    spi_sclk <= gpio_ja1;
-    
+    reset_n <= not reset_n; -- Invert the active-high reset to active-low for the core
+
     -- Input clock buffer for the 100 MHz system clock
     clk_ibufg_inst : IBUFG
     port map (
@@ -71,7 +64,7 @@ begin
     port map (
         i_clk => clk_100mhz_int,
         i_clk_locked => clk_locked,
-        i_reset => n_reset_n, -- Invert active-low reset input to active-high
+        i_reset => not reset_n, -- Invert active-low reset input to active-high
         o_reset => reset        -- Use this signal for everything except the clock generator
     );
         

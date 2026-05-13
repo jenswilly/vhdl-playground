@@ -26,7 +26,7 @@ update_compile_order -fileset sources_1
 # Add constraint files
 puts "--- Adding Constraints Files ---\n"
 add_files -fileset constrs_1 \
-    ./third_party/verilog-ethernet/example/Arty/fpga/fpga.xdc
+    ./constraints/arty-a7-100t.xdc
 
 # Add simulation files
 puts "--- No Simulation Sources ---\n"
