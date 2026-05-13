@@ -37,13 +37,13 @@ architecture rtl of core is
     signal spi_axis_tvalid : std_logic;
     signal spi_axis_tdata : std_logic_vector(7 downto 0);
 
-    signal fifo_axis_tready : std_logic;
+    -- AXI Stream handshake from FIFO input back to SPI output
+    signal fifo_axis_tready : std_logic;    -- FIFO ready to accept data (should be always unless full)
+
+    -- AXI Stream signals between the FIFO output and UART bridge logic
     signal fifo_axis_tvalid : std_logic;
     signal fifo_axis_tdata : std_logic_vector(7 downto 0);
 
-    -- 
-    
-begin
     -- AXI Stream FIFO component declaration
     component axis_fifo is
         generic (
@@ -100,6 +100,29 @@ begin
         );
     end component;
 
+    -- UART bridge control signals
+    signal uart_tx_en_sig : std_logic;
+    signal uart_tx_busy_sig : std_logic;
+
+begin
+    -- Bridge FIFO AXI-stream output to pulse-based UART TX control.
+    -- uart_tx_en is asserted for one clk cycle when data is available and UART is idle.
+    p_fifo_to_uart_bridge : process (clk)
+    begin
+        if rising_edge(clk) then
+            if rst = '1' then
+                uart_tx_en_sig <= '0';
+            else
+                uart_tx_en_sig <= '0'; -- Reset to 0 every cycle, only pulse high when conditions are met below.
+
+                -- Consume one FIFO byte only when UART can start a new frame.
+                if fifo_axis_tvalid = '1' and uart_tx_busy_sig = '0' then
+                    uart_tx_en_sig <= '1';
+                end if;
+            end if;
+        end if;
+    end process;
+
 
     -- SPI slave instance
     spi_axis : entity work.spi_slave_axis(arch)
@@ -116,7 +139,7 @@ begin
 
             i_axis_clk => clk,
             i_axis_rst => rst,
-            i_axis_tready => fifo_axis_tready,
+            i_axis_tready => fifo_axis_tready,  -- Ready to accept data when FIFO is ready
             o_axis_tvalid => spi_axis_tvalid,
             o_axis_tdata => spi_axis_tdata
         );
@@ -147,7 +170,15 @@ begin
             -- FIFO outputs
             m_axis_tdata => fifo_axis_tdata,
             m_axis_tvalid => fifo_axis_tvalid,
-            m_axis_tready => open,
+            m_axis_tready => uart_tx_en_sig,    -- Ready to read one byte from FIFO when UART transmit starts
+            m_axis_tkeep => open,
+            m_axis_tlast => open,
+            m_axis_tid => open,
+            m_axis_tdest => open,
+            m_axis_tuser => open,
+            status_overflow => open,
+            status_bad_frame => open,
+            status_good_frame => open
         );
 
     -- UART TX instance
@@ -158,11 +189,16 @@ begin
         )
         port map (
             clk => clk,
+            -- uart_tx uses active-low reset, so core active-high rst is inverted.
             resetn => not rst,
+            -- Serial TX output routed directly to the top-level UART pin.
             uart_txd => uart_txd,
-            uart_tx_busy => uart_tx_busy,
-            uart_tx_en => uart_tx_en,
-            uart_tx_data => uart_tx_data
+            -- Busy feedback gates FIFO consumption and next transmit trigger.
+            uart_tx_busy => uart_tx_busy_sig,
+            -- One-cycle transmit start pulse generated in p_fifo_to_uart_bridge.
+            uart_tx_en => uart_tx_en_sig,
+            -- Current FIFO output byte sent over UART when uart_tx_en pulses.
+            uart_tx_data => fifo_axis_tdata
         );    
 
 end architecture rtl;
