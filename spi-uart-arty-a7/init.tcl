@@ -16,9 +16,9 @@ add_files -fileset sources_1 \
 set_property FILE_TYPE {VHDL 2008} [get_files *.vhd]
 
 add_files -fileset sources_1 \
-    ./third_party/verilog_ethernet/lib/axis/rtl/axis_fifo.v
+    ./third_party/verilog-ethernet/lib/axis/rtl/axis_fifo.v
 
-set_property top fpga [current_fileset]
+set_property top top [current_fileset]
 update_compile_order -fileset sources_1
 
 # set_property used_in_simulation false [get_files top_syn.vhd]
@@ -26,7 +26,7 @@ update_compile_order -fileset sources_1
 # Add constraint files
 puts "--- Adding Constraints Files ---\n"
 add_files -fileset constrs_1 \
-    ./third_party/verilog_ethernet/example/Arty/fpga/fpga.xdc
+    ./third_party/verilog-ethernet/example/Arty/fpga/fpga.xdc
 
 # Add simulation files
 puts "--- No Simulation Sources ---\n"

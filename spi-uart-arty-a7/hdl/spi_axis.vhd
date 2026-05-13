@@ -24,9 +24,9 @@ entity spi_slave_axis is
         i_rst : in std_logic;   -- Active high reset for the SPI clock domain.
 
         i_axis_clk : in std_logic;
-        i_axis_rst : in std_logic; -- Active high reset for the AXI Stream clock domain.
-        i_axis_tready : in std_logic;
-        o_axis_tvalid : out std_logic;
+        i_axis_rst : in std_logic;      -- Active high reset for the AXI Stream clock domain.
+        i_axis_tready : in std_logic;   -- Downstream is ready to accept data
+        o_axis_tvalid : out std_logic;  -- Has valid data for the downstream to consume
         o_axis_tdata : out std_logic_vector(WIDTH-1 downto 0)
     );        
 end entity spi_slave_axis;
