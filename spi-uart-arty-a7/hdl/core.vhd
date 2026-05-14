@@ -6,26 +6,8 @@ entity core is
     port (
         clk         : in  std_logic;
         rst         : in  std_logic;
-
-        led0_r      : out std_logic;
-        led0_g      : out std_logic;
-        led0_b      : out std_logic;
-        led1_r      : out std_logic;
-        led1_g      : out std_logic;
-        led1_b      : out std_logic;
-        led2_r      : out std_logic;
-        led2_g      : out std_logic;
-        led2_b      : out std_logic;
-        led3_r      : out std_logic;
-        led3_g      : out std_logic;
-        led3_b      : out std_logic;
-        led4        : out std_logic;
-        led5        : out std_logic;
-        led6        : out std_logic;
-        led7        : out std_logic;
-
+        o_leds      : out std_logic_vector(7 downto 0);
         uart_txd    : out std_logic;
-
         spi_sclk    : in  std_logic;
         spi_ss_n    : in  std_logic;
         spi_mosi    : in  std_logic
@@ -107,7 +89,7 @@ architecture rtl of core is
 begin
     -- Bridge FIFO AXI-stream output to pulse-based UART TX control.
     -- uart_tx_en is asserted for one clk cycle when data is available and UART is idle.
-    p_fifo_to_uart_bridge : process (clk)
+    fifo_to_uart_bridge : process (clk)
     begin
         if rising_edge(clk) then
             if rst = '1' then
@@ -121,7 +103,19 @@ begin
                 end if;
             end if;
         end if;
-    end process;
+    end process fifo_to_uart_bridge;
+
+    -- SPI input -> LEDs process
+    spi_to_leds :process (clk, rst)
+    begin
+        if rising_edge(clk) then
+            if rst = '1' then
+                o_leds <= (others => '0');
+            else
+                o_leds <= spi_axis_tdata; -- Display the most recent SPI byte on the LEDs for debugging
+            end if;
+        end if;
+    end process spi_to_leds;
 
 
     -- SPI slave instance
@@ -170,15 +164,7 @@ begin
             -- FIFO outputs
             m_axis_tdata => fifo_axis_tdata,
             m_axis_tvalid => fifo_axis_tvalid,
-            m_axis_tready => uart_tx_en_sig,    -- Ready to read one byte from FIFO when UART transmit starts
-            m_axis_tkeep => open,
-            m_axis_tlast => open,
-            m_axis_tid => open,
-            m_axis_tdest => open,
-            m_axis_tuser => open,
-            status_overflow => open,
-            status_bad_frame => open,
-            status_good_frame => open
+            m_axis_tready => uart_tx_en_sig    -- Ready to read one byte from FIFO when UART transmit starts
         );
 
     -- UART TX instance
