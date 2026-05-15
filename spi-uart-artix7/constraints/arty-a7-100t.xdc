@@ -34,9 +34,9 @@ set_false_path -to [get_ports {led0_r led0_g led0_b led1_r led1_g led1_b led2_r 
 set_output_delay 0 [get_ports {led0_r led0_g led0_b led1_r led1_g led1_b led2_r led2_g led2_b led3_r led3_g led3_b}]
 
 # Reset button
-set_property -dict {LOC C2   IOSTANDARD LVCMOS33} [get_ports reset_n]
-set_false_path -from [get_ports {reset_n}]
-set_input_delay 0 [get_ports {reset_n}]
+set_property -dict {LOC C2   IOSTANDARD LVCMOS33} [get_ports reset_pin]; # Active low
+set_false_path -from [get_ports {reset_pin}]
+set_input_delay 0 [get_ports {reset_pin}]
 
 # Push buttons
 # set_property -dict {LOC D9   IOSTANDARD LVCMOS33} [get_ports {btn[0]}]
