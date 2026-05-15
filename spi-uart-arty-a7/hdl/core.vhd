@@ -19,8 +19,8 @@ architecture rtl of core is
     signal spi_axis_tvalid : std_logic;
     signal spi_axis_tdata : std_logic_vector(7 downto 0);
 
-    -- AXI Stream handshake from FIFO input back to SPI output
-    signal fifo_axis_tready : std_logic;    -- FIFO ready to accept data (should be always unless full)
+    -- FIFO ready to accept data (not used,should be always unless full)
+    signal fifo_axis_tready : std_logic;    
 
     -- AXI Stream signals between the FIFO output and UART bridge logic
     signal fifo_axis_tvalid : std_logic;
@@ -133,7 +133,6 @@ begin
 
             i_axis_clk => clk,
             i_axis_rst => rst,
-            i_axis_tready => fifo_axis_tready,  -- Ready to accept data when FIFO is ready
             o_axis_tvalid => spi_axis_tvalid,
             o_axis_tdata => spi_axis_tdata
         );
