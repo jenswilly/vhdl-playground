@@ -13,6 +13,7 @@ add_files -fileset sources_1 \
     ./hdl/core.vhd \
     ./hdl/spi_axis.vhd \
     ./hdl/reset.vhd \
+    ./hdl/debounce_switch.v \
     ./hdl/uart_tx.v
 set_property FILE_TYPE {VHDL 2008} [get_files *.vhd]
 

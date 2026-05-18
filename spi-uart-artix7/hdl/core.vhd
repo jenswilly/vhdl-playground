@@ -6,6 +6,7 @@ entity core is
     port (
         clk         : in  std_logic;
         rst         : in  std_logic;
+        i_btn       : in  std_logic;
         o_leds      : out std_logic_vector(7 downto 0);
         uart_txd    : out std_logic;
         spi_sclk    : in  std_logic;
@@ -15,9 +16,18 @@ entity core is
 end entity core;
 
 architecture rtl of core is
+    -- Debug signals
+    signal debug_active : std_logic;
+    signal debug_tvalid : std_logic;
+    signal debug_tdata  : std_logic_vector(7 downto 0);
+
     -- AXI Stream signals between the SPI slave and the FIFO
     signal spi_axis_tvalid : std_logic;
     signal spi_axis_tdata : std_logic_vector(7 downto 0);
+
+    -- Selected FIFO input stream (SPI or debug byte injection)
+    signal fifo_in_tvalid : std_logic;
+    signal fifo_in_tdata  : std_logic_vector(7 downto 0);
 
     -- FIFO ready to accept data (not used,should be always unless full)
     signal fifo_axis_tready : std_logic;    
@@ -87,6 +97,33 @@ architecture rtl of core is
     signal uart_tx_busy_sig : std_logic;
 
 begin
+    -- Debug process to inject one byte when the button edge is detected.
+    debug_process : process (clk)
+    begin
+        if rising_edge(clk) then
+            if rst = '1' then
+                debug_active <= '0';
+                debug_tvalid <= '0';
+                debug_tdata <= (others => '0');
+            else
+                -- Default to no injection; pulse high for one cycle on new press.
+                debug_tvalid <= '0';
+
+                if i_btn = '1' and debug_active = '0' then
+                    debug_active <= '1';
+                    debug_tdata <= x"41";
+                    debug_tvalid <= '1';
+                elsif i_btn = '0' then
+                    debug_active <= '0'; -- Button released, clear active flag
+                end if;
+            end if;
+        end if;
+    end process debug_process;
+
+    -- Select debug byte injection when requested, otherwise pass through SPI bytes.
+    fifo_in_tvalid <= debug_tvalid or spi_axis_tvalid;
+    fifo_in_tdata <= debug_tdata when debug_tvalid = '1' else spi_axis_tdata;
+
     -- Bridge FIFO AXI-stream output to pulse-based UART TX control.
     -- uart_tx_en is asserted for one clk cycle when data is available and UART is idle.
     fifo_to_uart_bridge : process (clk)
@@ -151,9 +188,9 @@ begin
             rst => rst,
 
             -- FIFO inputs
-            s_axis_tdata => spi_axis_tdata,     -- Data from SPI slave -> FIFO
+            s_axis_tdata => fifo_in_tdata,      -- Data from selected source -> FIFO
             s_axis_tkeep => (others => '1'),
-            s_axis_tvalid => spi_axis_tvalid,   -- Data presented to FIFO is valid
+            s_axis_tvalid => fifo_in_tvalid,    -- Data presented to FIFO is valid
             s_axis_tready => fifo_axis_tready,  -- FIFO is ready to accept data
             s_axis_tlast => '0',
             s_axis_tid => (others => '0'),

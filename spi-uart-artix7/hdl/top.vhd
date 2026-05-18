@@ -12,6 +12,7 @@ entity top is
     port (
         clk         : in  std_logic;
         reset_pin   : in  std_logic; -- Rest input pin. NB: can be either active high or low depending on board
+        debug_btn   : in  std_logic; -- Active high
 
         led0_r      : out std_logic;
         led0_g      : out std_logic;
@@ -44,11 +45,23 @@ architecture rtl of top is
     signal clk_spi_int      : std_logic; -- Buffered SPI clock domain
     signal reset            : std_logic; -- Active high reset from pin -> MMCM reset input
     signal leds             : std_logic_vector(7 downto 0);
-
+    signal btn              : std_logic; -- Debounced debug button
     signal spi_sclk : std_logic;
     signal spi_ss_n : std_logic;
     signal spi_mosi : std_logic;
 
+    component debounce_switch is
+        generic (
+            N       : integer := 3; -- length of shift register
+            RATE    : integer := 125000 -- clock division factor
+        );
+        port (
+            i_clk       : in std_logic;
+            i_rst       : in std_logic;
+            i_raw       : in std_logic;
+            o_debounced : out std_logic
+        );
+    end component debounce_switch;
 begin
     -- Map input reset pin to internal reset signal
     arty_resetgen: if BOARD_TYPE = "arty" generate
@@ -59,6 +72,18 @@ begin
         reset <= reset_pin; -- Cmod A7 has an active high reset button
     end generate;
 
+    debounce_inst : debounce_switch
+        generic map (
+            N => 3,
+            RATE => 100000 -- Assuming a 100 MHz clock, this gives a debounce time of ~1 ms
+        )
+        port map (
+            i_clk => clk_100mhz_int,
+            i_rst => reset_int,
+            i_raw => debug_btn,
+            o_debounced => btn
+        );
+        
     spi_ss_n <= gpio_ja3;
     spi_mosi <= gpio_ja2;
     spi_sclk <= gpio_ja1;
@@ -151,6 +176,7 @@ begin
         port map (
             clk => clk_100mhz_int,
             rst => reset_int,
+            i_btn => btn,
             o_leds => leds,
             uart_txd => uart_txd,
             spi_sclk => clk_spi_int,

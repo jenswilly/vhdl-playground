@@ -39,7 +39,9 @@ set_false_path -from [get_ports {reset_pin}]
 set_input_delay 0 [get_ports {reset_pin}]
 
 # Push buttons
-# set_property -dict {LOC D9   IOSTANDARD LVCMOS33} [get_ports {btn[0]}]
+set_property -dict {LOC D9   IOSTANDARD LVCMOS33} [get_ports {debug_btn}]
+set_false_path -from [get_ports {debug_btn}]
+set_input_delay 0 [get_ports {debug_btn}]
 # set_property -dict {LOC C9   IOSTANDARD LVCMOS33} [get_ports {btn[1]}]
 # set_property -dict {LOC B9   IOSTANDARD LVCMOS33} [get_ports {btn[2]}]
 # set_property -dict {LOC B8   IOSTANDARD LVCMOS33} [get_ports {btn[3]}]
