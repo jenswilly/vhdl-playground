@@ -16,16 +16,14 @@ entity top is
 
         led0_r      : out std_logic;
         led0_g      : out std_logic;
-        led0_b      : out std_logic;
         led1_r      : out std_logic;
         led1_g      : out std_logic;
-        led1_b      : out std_logic;
         led2_r      : out std_logic;
         led2_g      : out std_logic;
-        led2_b      : out std_logic;
         led3_r      : out std_logic;
         led3_g      : out std_logic;
-        led3_b      : out std_logic;
+        led_clk_ok  : out std_logic; -- Clock lock status LED (on if clock is stable)
+        led_reset   : out std_logic; -- Reset pin status LED (on if reset is active)
 
         uart_txd    : out std_logic;
 
@@ -97,10 +95,8 @@ begin
     led3_r <= leds(6);
     led3_g <= leds(7);
 
-    led0_b <= clk_locked;   -- Clock lock status
-    led1_b <= reset;        -- Reset pin status
-    led2_b <= '0';
-    led3_b <= '0';
+    led_clk_ok <= clk_locked;   -- Clock lock status
+    led_reset <= reset;        -- Reset pin status
     
     -- Input clock buffer SPI clock
     clk_ibufg_spi_inst : IBUFG
@@ -131,7 +127,7 @@ begin
             clkfbout => clkfb,
             clkfbin => clkfb,
             pwrdwn => '0',             -- Always powered on
-            rst => reset,              -- Active high reset for the MMCM
+            rst => '0',                -- MMCM always active
             locked => clk_locked       -- Output: '1' when clock is locked
         );
     end generate;
@@ -151,7 +147,7 @@ begin
             clkfbout => clkfb,
             clkfbin => clkfb,
             pwrdwn => '0',             -- Always powered on
-            rst => reset,              -- Active high reset for the MMCM
+            rst => '0',                -- MMCM always active
             locked => clk_locked       -- Output: '1' when clock is locked
         );
     end generate;

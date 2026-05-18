@@ -146,7 +146,7 @@ begin
     spi_to_leds :process (clk, rst)
     begin
         if rising_edge(clk) then
-            if rst = '1' then
+            if rst = '1' or spi_ss_n = '1' then
                 o_leds <= (others => '0');
             else
                 o_leds <= spi_axis_tdata; -- Display the most recent SPI byte on the LEDs for debugging
