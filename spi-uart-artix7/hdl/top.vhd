@@ -29,9 +29,9 @@ entity top is
 
         uart_txd    : out std_logic;
 
-        gpio_ja1    : in  std_logic;       -- PMOD connector for SPI
-        gpio_ja2    : in  std_logic;
-        gpio_ja3    : in  std_logic
+        gpio_ja1    : in  std_logic;    -- SPI clock input
+        gpio_ja2    : in  std_logic;    -- SPI MOSI   
+        gpio_ja3    : in  std_logic     -- SPI nCS
     );
 end entity top;
 
@@ -84,9 +84,9 @@ begin
             o_debounced => btn
         );
         
-    spi_ss_n <= gpio_ja3;
-    spi_mosi <= gpio_ja2;
     spi_sclk <= gpio_ja1;
+    spi_mosi <= gpio_ja2;
+    spi_ss_n <= gpio_ja3;
     
     led0_r <= leds(0);
     led0_g <= leds(1);

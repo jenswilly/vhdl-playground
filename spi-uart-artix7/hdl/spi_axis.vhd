@@ -40,8 +40,6 @@ architecture arch of spi_slave_axis is
     signal spi_data_ready : std_logic := '0';
 begin
 
-    -- Directly drive output ports in the process below
-
     spi : process(sclk)
         variable next_shift : std_logic_vector(WIDTH downto 0);
     begin

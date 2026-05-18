@@ -211,16 +211,11 @@ begin
         )
         port map (
             clk => clk,
-            -- uart_tx uses active-low reset, so core active-high rst is inverted.
-            resetn => not rst,
-            -- Serial TX output routed directly to the top-level UART pin.
-            uart_txd => uart_txd,
-            -- Busy feedback gates FIFO consumption and next transmit trigger.
-            uart_tx_busy => uart_tx_busy_sig,
-            -- One-cycle transmit start pulse generated in p_fifo_to_uart_bridge.
-            uart_tx_en => uart_tx_en_sig,
-            -- Current FIFO output byte sent over UART when uart_tx_en pulses.
-            uart_tx_data => fifo_axis_tdata
+            resetn => not rst,                  -- uart_tx uses active-low reset, so core active-high rst is inverted.
+            uart_txd => uart_txd,               -- Serial TX output routed directly to the top-level UART pin.
+            uart_tx_busy => uart_tx_busy_sig,   -- Busy feedback gates FIFO consumption and next transmit trigger.
+            uart_tx_en => uart_tx_en_sig,       -- One-cycle transmit start pulse generated in p_fifo_to_uart_bridge.
+            uart_tx_data => fifo_axis_tdata     -- Current FIFO output byte sent over UART when uart_tx_en pulses.
         );    
 
 end architecture rtl;
