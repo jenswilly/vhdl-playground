@@ -34,36 +34,37 @@ end entity spi_slave_axis;
 
 architecture arch of spi_slave_axis is
     -- SPI domain state: assemble one received word from serial MOSI bits.
-    -- Use WIDTH+1 bits: MSB is '1' when starting a new word, as in spi.vhdl
-    signal spi_shift : std_logic_vector(WIDTH downto 0) := (0 => '1', others => '0');
+    signal spi_shift : std_logic_vector(WIDTH-1 downto 0) := (others => '0');
+    signal spi_bit_count : integer range 0 to WIDTH-1 := 0;
     signal spi_word_data : std_logic_vector(WIDTH-1 downto 0) := (others => '0');
-    signal spi_data_ready : std_logic := '0';
+    signal spi_data_toggle : std_logic := '0';
+
+    -- Synchronize SPI byte-ready event into AXI clock domain.
+    signal spi_data_toggle_sync_0 : std_logic := '0';
+    signal spi_data_toggle_sync_1 : std_logic := '0';
+    signal spi_data_toggle_last   : std_logic := '0';
 begin
 
     spi : process(sclk)
-        variable next_shift : std_logic_vector(WIDTH downto 0);
+        variable next_shift : std_logic_vector(WIDTH-1 downto 0);
     begin
         if rising_edge(sclk) then
             if i_rst = '1' or ss_n = '1' then
-                spi_shift <= (0 => '1', others => '0');
-                spi_data_ready <= '0';
+                spi_shift <= (others => '0');
+                spi_bit_count <= 0;
             else
-                -- Default: shift in new bit, MSB first, keep MSB as marker
-                next_shift := spi_shift(WIDTH-1 downto 0) & i_mosi;
-
-                if spi_shift(WIDTH) = '1' then
-                    -- Starting new word. Data was captured last iteration
-                    next_shift := (1 => '1', 0 => i_mosi, others => '0');
-                    spi_data_ready <= '0';
-                elsif spi_shift(WIDTH-1) = '1' then
-                    -- About to shift in last bit: capture data and flag ready
-                    spi_word_data <= spi_shift(WIDTH-2 downto 0) & i_mosi;
-                    spi_data_ready <= '1';
-                    next_shift := (1 => '1', 0 => i_mosi, others => '0');
-                else
-                    spi_data_ready <= '0';
-                end if;
+                -- CPOL=0, CPHA=0: sample MOSI on rising edge, MSB first.
+                next_shift := spi_shift(WIDTH-2 downto 0) & i_mosi;
                 spi_shift <= next_shift;
+
+                if spi_bit_count = WIDTH-1 then
+                    -- Completed one full word exactly every WIDTH SCLK edges.
+                    spi_word_data <= next_shift;
+                    spi_data_toggle <= not spi_data_toggle;
+                    spi_bit_count <= 0;
+                else
+                    spi_bit_count <= spi_bit_count + 1;
+                end if;
             end if;
         end if;
     end process spi;
@@ -72,11 +73,18 @@ begin
     begin
         if rising_edge(i_axis_clk) then
             if i_axis_rst = '1' then
+                spi_data_toggle_sync_0 <= '0';
+                spi_data_toggle_sync_1 <= '0';
+                spi_data_toggle_last <= '0';
                 o_axis_tvalid <= '0';
                 o_axis_tdata <= (others => '0');
             else
-                -- Pulse tvalid for one cycle when data is ready
-                if spi_data_ready = '1' then
+                -- Cross domain event transfer: detect one toggle edge per received SPI word.
+                spi_data_toggle_sync_0 <= spi_data_toggle;
+                spi_data_toggle_sync_1 <= spi_data_toggle_sync_0;
+
+                if spi_data_toggle_sync_1 /= spi_data_toggle_last then
+                    spi_data_toggle_last <= spi_data_toggle_sync_1;
                     o_axis_tdata <= spi_word_data;
                     o_axis_tvalid <= '1';
                 else
