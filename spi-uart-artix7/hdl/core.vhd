@@ -20,6 +20,8 @@ architecture rtl of core is
 
     -- Debug signals
     signal debug_active : std_logic;
+    signal debug_burst_active : std_logic;
+    signal debug_burst_count : unsigned(3 downto 0);
     signal debug_tvalid : std_logic;
     signal debug_tdata  : std_logic_vector(7 downto 0);
 
@@ -95,6 +97,7 @@ architecture rtl of core is
     end component;
 
     -- UART bridge control signals
+    signal uart_start_sig : std_logic;
     signal uart_tx_en_sig : std_logic;
     signal uart_tx_busy_sig : std_logic;
 
@@ -103,24 +106,38 @@ architecture rtl of core is
     signal drain_enable : std_logic := '0';
 
 begin
-    -- Debug process to inject one byte when the button edge is detected.
+    -- Debug process to inject 10 consecutive bytes when the button edge is detected.
     debug_process : process (clk)
     begin
         if rising_edge(clk) then
             if rst = '1' then
                 debug_active <= '0';
+                debug_burst_active <= '0';
+                debug_burst_count <= (others => '0');
                 debug_tvalid <= '0';
                 debug_tdata <= (others => '0');
             else
-                -- Default to no injection; pulse high for one cycle on new press.
+                -- Default to no injection; asserted while emitting the debug burst.
                 debug_tvalid <= '0';
 
                 if i_btn = '1' and debug_active = '0' then
                     debug_active <= '1';
-                    debug_tdata <= x"41";
-                    debug_tvalid <= '1';
+                    debug_burst_active <= '1';
+                    debug_burst_count <= (others => '0');
                 elsif i_btn = '0' then
                     debug_active <= '0'; -- Button released, clear active flag
+                end if;
+
+                if debug_burst_active = '1' then
+                    debug_tvalid <= '1';
+                    -- Emit bytes 0x41..0x4A over 10 consecutive cycles.
+                    debug_tdata <= std_logic_vector(to_unsigned(16#41#, 8) + resize(debug_burst_count, 8));
+
+                    if debug_burst_count = to_unsigned(9, debug_burst_count'length) then
+                        debug_burst_active <= '0';
+                    else
+                        debug_burst_count <= debug_burst_count + 1;
+                    end if;
                 end if;
             end if;
         end if;
@@ -152,23 +169,9 @@ begin
         end if;
     end process spi_idle_timer;
 
-    -- Bridge FIFO AXI-stream output to pulse-based UART TX control.
-    -- uart_tx_en is asserted for one clk cycle when data is available and UART is idle.
-    fifo_to_uart_bridge : process (clk)
-    begin
-        if rising_edge(clk) then
-            if rst = '1' then
-                uart_tx_en_sig <= '0';
-            else
-                uart_tx_en_sig <= '0'; -- Reset to 0 every cycle, only pulse high when conditions are met below.
-
-                -- Consume one FIFO byte only when UART can start a new frame.
-                if fifo_axis_tvalid = '1' and uart_tx_busy_sig = '0' and drain_enable = '1' then
-                    uart_tx_en_sig <= '1';
-                end if;
-            end if;
-        end if;
-    end process fifo_to_uart_bridge;
+    -- Single-cycle start handshake: UART start and FIFO pop happen on the same edge.
+    uart_start_sig <= '1' when fifo_axis_tvalid = '1' and uart_tx_busy_sig = '0' and drain_enable = '1' else '0';
+    uart_tx_en_sig <= uart_start_sig;
 
     -- SPI input -> LEDs process
     spi_to_leds :process (clk, rst)
@@ -228,7 +231,7 @@ begin
             -- FIFO outputs
             m_axis_tdata => fifo_axis_tdata,
             m_axis_tvalid => fifo_axis_tvalid,
-            m_axis_tready => uart_tx_en_sig    -- Ready to read one byte from FIFO when UART transmit starts
+            m_axis_tready => uart_start_sig    -- Pop exactly when UART starts a new frame
         );
 
     -- UART TX instance
