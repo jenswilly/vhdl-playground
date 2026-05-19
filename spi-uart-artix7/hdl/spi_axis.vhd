@@ -22,11 +22,9 @@ entity spi_slave_axis is
         i_mosi : in std_logic;
         o_miso : out std_logic; 
 
-        i_rst : in std_logic;   -- Active high reset for the SPI clock domain.
-
         -- Minimal AXI Stream. NB: no axis_tready - assuming downstream is always ready
         i_axis_clk : in std_logic;
-        i_axis_rst : in std_logic;      -- Active high reset for the AXI Stream clock domain.
+        i_axis_rst : in std_logic;      -- Active high reset (AXI clock domain)
         o_axis_tvalid : out std_logic;  -- Has valid data for the downstream to consume
         o_axis_tdata : out std_logic_vector(WIDTH-1 downto 0)
     );        
@@ -48,11 +46,17 @@ architecture arch of spi_slave_axis is
     signal axis_tdata_reg : std_logic_vector(WIDTH-1 downto 0) := (others => '0');
 begin
 
-    spi : process(sclk)
+    -- Main SPI slave process. Also handles reset
+    spi : process(sclk, i_axis_rst)
         variable next_shift : std_logic_vector(WIDTH-1 downto 0);
     begin
-        if rising_edge(sclk) then
-            if i_rst = '1' or ss_n = '1' then
+        if i_axis_rst = '1' then
+            spi_shift <= (others => '0');
+            spi_bit_count <= 0;
+            spi_word_data <= (others => '0');
+            spi_data_toggle <= '0';
+        elsif rising_edge(sclk) then
+            if ss_n = '1' then
                 spi_shift <= (others => '0');
                 spi_bit_count <= 0;
             else

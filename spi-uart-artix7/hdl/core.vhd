@@ -197,8 +197,6 @@ begin
             i_mosi => spi_mosi,
             o_miso => open, -- Not used in this design
 
-            i_rst => rst,
-
             i_axis_clk => clk,
             i_axis_rst => rst,
             o_axis_tvalid => spi_axis_tvalid,
