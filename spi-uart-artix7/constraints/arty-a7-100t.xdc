@@ -60,8 +60,9 @@ set_input_delay 0 [get_ports {debug_btn}]
 
 # GPIO
 # PMOD JA
-set_property -dict {LOC G13  IOSTANDARD LVCMOS33} [get_ports {gpio_ja1}] ;# PMOD JA pin 1: SPI_SCLK
-create_clock -period 50.000 -name spi_sclk [get_ports gpio_ja1]          ;# Create a clock object for the SPI clock input (20 MHz max)
+set_property -dict {LOC G13  IOSTANDARD LVCMOS33} [get_ports {gpio_ja1}]; # PMOD JA pin 1: SPI_SCLK
+set_property CLOCK_BUFFER_TYPE NONE [get_ports {gpio_ja1}]
+create_clock -period 40.000 -name spi_sclk [get_ports {gpio_ja1}];        # Create a clock object for the SPI clock input (25 MHz max)
 set_clock_groups -asynchronous -group [get_clocks spi_sclk] -group [get_clocks -include_generated_clocks clk] ;# Declare SPI and system clock families asynchronous
 
 set_property -dict {LOC B11  IOSTANDARD LVCMOS33} [get_ports {gpio_ja2}] ;# PMOD JA pin 2

@@ -40,7 +40,6 @@ architecture rtl of top is
     signal clkfb            : std_logic; -- Clock feedback for MMCM
     signal clk_locked       : std_logic;
     signal reset_int        : std_logic; -- Active high reset for everything except the clock generator
-    signal clk_spi_int      : std_logic; -- Buffered SPI clock domain
     signal reset            : std_logic; -- Active high reset from pin -> MMCM reset input
     signal leds             : std_logic_vector(7 downto 0);
     signal btn              : std_logic; -- Debounced debug button
@@ -98,13 +97,6 @@ begin
     led_clk_ok <= clk_locked;   -- Clock lock status
     led_reset <= reset;        -- Reset pin status
     
-    -- Input clock buffer SPI clock
-    clk_ibufg_spi_inst : IBUFG
-    port map (
-        O => clk_spi_int,
-        I => spi_sclk
-    );
-
     -- Input clock buffer for the 100 MHz system clock
     clk_ibufg_inst : IBUFG
     port map (
@@ -175,7 +167,7 @@ begin
             i_btn => btn,
             o_leds => leds,
             uart_txd => uart_txd,
-            spi_sclk => clk_spi_int,
+            spi_sclk => spi_sclk,
             spi_ss_n => spi_ss_n,
             spi_mosi => spi_mosi
         );
