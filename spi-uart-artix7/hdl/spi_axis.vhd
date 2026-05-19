@@ -43,6 +43,9 @@ architecture arch of spi_slave_axis is
     signal spi_data_toggle_sync_0 : std_logic := '0';
     signal spi_data_toggle_sync_1 : std_logic := '0';
     signal spi_data_toggle_last   : std_logic := '0';
+
+    -- AXI-domain data register to hold one received word per synchronized event.
+    signal axis_tdata_reg : std_logic_vector(WIDTH-1 downto 0) := (others => '0');
 begin
 
     spi : process(sclk)
@@ -77,7 +80,7 @@ begin
                 spi_data_toggle_sync_1 <= '0';
                 spi_data_toggle_last <= '0';
                 o_axis_tvalid <= '0';
-                o_axis_tdata <= (others => '0');
+                axis_tdata_reg <= (others => '0');
             else
                 -- Cross domain event transfer: detect one toggle edge per received SPI word.
                 spi_data_toggle_sync_0 <= spi_data_toggle;
@@ -85,7 +88,7 @@ begin
 
                 if spi_data_toggle_sync_1 /= spi_data_toggle_last then
                     spi_data_toggle_last <= spi_data_toggle_sync_1;
-                    o_axis_tdata <= spi_word_data;
+                    axis_tdata_reg <= spi_word_data;
                     o_axis_tvalid <= '1';
                 else
                     o_axis_tvalid <= '0';
@@ -93,6 +96,8 @@ begin
             end if;
         end if;
     end process axis;
+
+    o_axis_tdata <= axis_tdata_reg;
 
     o_miso <= '0' when ss_n = '0' else 'Z'; 
 

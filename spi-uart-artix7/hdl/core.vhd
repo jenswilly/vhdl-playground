@@ -16,6 +16,8 @@ entity core is
 end entity core;
 
 architecture rtl of core is
+    constant SPI_IDLE_TIMEOUT_CYCLES : natural := 50_000_000; -- 0.5 s at 100 MHz
+
     -- Debug signals
     signal debug_active : std_logic;
     signal debug_tvalid : std_logic;
@@ -96,6 +98,10 @@ architecture rtl of core is
     signal uart_tx_en_sig : std_logic;
     signal uart_tx_busy_sig : std_logic;
 
+    -- FIFO drain control: only start draining after SPI has been idle long enough.
+    signal spi_idle_counter : unsigned(25 downto 0) := (others => '0');
+    signal drain_enable : std_logic := '0';
+
 begin
     -- Debug process to inject one byte when the button edge is detected.
     debug_process : process (clk)
@@ -124,6 +130,28 @@ begin
     fifo_in_tvalid <= debug_tvalid or spi_axis_tvalid;
     fifo_in_tdata <= debug_tdata when debug_tvalid = '1' else spi_axis_tdata;
 
+    -- Delay FIFO draining until there has been no SPI data for a while.
+    spi_idle_timer : process (clk)
+    begin
+        if rising_edge(clk) then
+            if rst = '1' then
+                spi_idle_counter <= (others => '0');
+                drain_enable <= '0';
+            else
+                if spi_axis_tvalid = '1' then
+                    spi_idle_counter <= (others => '0');
+                    drain_enable <= '0';
+                elsif drain_enable = '0' then
+                    if spi_idle_counter = to_unsigned(SPI_IDLE_TIMEOUT_CYCLES - 1, spi_idle_counter'length) then
+                        drain_enable <= '1';
+                    else
+                        spi_idle_counter <= spi_idle_counter + 1;
+                    end if;
+                end if;
+            end if;
+        end if;
+    end process spi_idle_timer;
+
     -- Bridge FIFO AXI-stream output to pulse-based UART TX control.
     -- uart_tx_en is asserted for one clk cycle when data is available and UART is idle.
     fifo_to_uart_bridge : process (clk)
@@ -135,7 +163,7 @@ begin
                 uart_tx_en_sig <= '0'; -- Reset to 0 every cycle, only pulse high when conditions are met below.
 
                 -- Consume one FIFO byte only when UART can start a new frame.
-                if fifo_axis_tvalid = '1' and uart_tx_busy_sig = '0' then
+                if fifo_axis_tvalid = '1' and uart_tx_busy_sig = '0' and drain_enable = '1' then
                     uart_tx_en_sig <= '1';
                 end if;
             end if;
