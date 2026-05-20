@@ -61,8 +61,8 @@ architecture rtl of top is
     end component debounce_switch;
 begin
     -- Map input reset pin to internal reset signal
-    arty_resetgen: if BOARD_TYPE = "arty" generate
-        reset <= not reset_pin; -- Arty A7 has an active low reset button
+    arty_resetgen: if BOARD_TYPE = "arty-a7" or BOARD_TYPE = "arty-s7" generate
+        reset <= not reset_pin; -- Arty A7/S7 has an active low reset button
     end generate;
 
     cmod_resetgen: if BOARD_TYPE = "cmod" generate
@@ -105,7 +105,7 @@ begin
     );
     
     -- MMCM instance to generate a stable 100 MHz clock from 100 MHz input clock
-    arty_clockgen: if BOARD_TYPE = "arty" generate
+    a7_clockgen: if BOARD_TYPE = "arty-a7" generate
         -- Arty A7: 100 MHz input clock
         mmcme2_arty_inst : MMCME2_BASE
         generic map (
@@ -125,8 +125,8 @@ begin
     end generate;
 
     -- MMCM instance to generate a stable 100 MHz clock from 12 MHz input clock
-    cmod_clockgen: if BOARD_TYPE = "cmod" generate
-        -- Cmod A7: 12 MHz input clock
+    cmod_s7_clockgen: if BOARD_TYPE = "cmod" or BOARD_TYPE = "arty-s7" generate
+        -- Cmod A7 and Arty S7: 12 MHz input clock
         mmcme2_cmod_inst : MMCME2_BASE
         generic map (
             clkfbout_mult_f => 50.0,    -- VCO frequency = 12 MHz * 50 = 600 MHz

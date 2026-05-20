@@ -2,19 +2,19 @@
 
 # Check for exactly one argument
 if [ "$#" -ne 1 ]; then
-	echo "Usage: $0 <arty|cmod>"
+	echo "Usage: $0 <a7|s7>"
 	exit 1
 fi
 
 case "$1" in
-	arty)
-		tcl_file="init_arty.tcl"
+	a7)
+		tcl_file="init_arty_a7.tcl"
 		;;
-	cmod)
-		tcl_file="init_cmod.tcl"
+	s7)
+		tcl_file="init_arty_s7.tcl"
 		;;
 	*)
-		echo "Invalid argument: $1. Must be 'arty' or 'cmod'."
+		echo "Invalid argument: $1. Must be 'a7' or 's7'."
 		exit 1
 		;;
 esac

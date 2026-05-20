@@ -1,10 +1,10 @@
 # Create project
-create_project "spi-uart-arty-a7" [pwd] -part "xc7a100tcsg324-1" -force
-set_property board_part digilentinc.com:arty-a7-100:part0:1.1 [current_project]
+create_project "spi-uart-arty-s7" [pwd] -part "xc7s50csga324-1" -force
+set_property board_part digilentinc.com:arty-s7-50:1.1 [current_project]
 set_property simulator_language VHDL [current_project]
 set_property target_language VHDL [current_project]
 set_property STEPS.WRITE_BITSTREAM.ARGS.BIN_FILE true [get_runs impl_1]
-set_property generic {BOARD_TYPE="arty"} [current_fileset]
+set_property generic {BOARD_TYPE="arty-s7"} [current_fileset]
 
 # Add source files
 puts "--- Adding Design Sources ---\n"
@@ -28,7 +28,7 @@ update_compile_order -fileset sources_1
 # Add constraint files
 puts "--- Adding Constraints Files ---\n"
 add_files -fileset constrs_1 \
-    ./constraints/arty-a7-100t.xdc
+    ./constraints/Arty-S7-50-Master.xdc
 
 # Add simulation files
 puts "--- No Simulation Sources ---\n"

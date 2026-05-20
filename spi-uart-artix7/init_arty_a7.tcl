@@ -1,10 +1,10 @@
 # Create project
-create_project "spi-uart-cmod-a7" [pwd] -part "xc7a35tcpg236-1" -force
-set_property board_part digilentinc.com:cmod_a7-35t:part0:1.2 [current_project]
+create_project "spi-uart-arty-a7" [pwd] -part "xc7a100tcsg324-1" -force
+set_property board_part digilentinc.com:arty-a7-100:part0:1.1 [current_project]
 set_property simulator_language VHDL [current_project]
 set_property target_language VHDL [current_project]
 set_property STEPS.WRITE_BITSTREAM.ARGS.BIN_FILE true [get_runs impl_1]
-set_property generic {BOARD_TYPE="cmod"} [current_fileset]
+set_property generic {BOARD_TYPE="arty-a7"} [current_fileset]
 
 # Add source files
 puts "--- Adding Design Sources ---\n"
@@ -13,6 +13,7 @@ add_files -fileset sources_1 \
     ./hdl/core.vhd \
     ./hdl/spi_axis.vhd \
     ./hdl/reset.vhd \
+    ./hdl/debounce_switch.v \
     ./hdl/uart_tx.v
 set_property FILE_TYPE {VHDL 2008} [get_files *.vhd]
 
@@ -27,7 +28,7 @@ update_compile_order -fileset sources_1
 # Add constraint files
 puts "--- Adding Constraints Files ---\n"
 add_files -fileset constrs_1 \
-    ./constraints/Cmod-A7-Master.xdc
+    ./constraints/arty-a7-100t.xdc
 
 # Add simulation files
 puts "--- No Simulation Sources ---\n"

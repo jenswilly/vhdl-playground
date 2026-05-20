@@ -2,19 +2,19 @@
 
 # Check for exactly one argument
 if [ "$#" -ne 1 ]; then
-	echo "Usage: $0 <arty|cmod>"
+	echo "Usage: $0 <a7|s7>"
 	exit 1
 fi
 
 case "$1" in
-	arty)
+	a7)
 		xpr_file="spi-uart-arty-a7.xpr"
 		;;
-	cmod)
-		xpr_file="spi-uart-cmod-a7.xpr"
+	s7)
+		xpr_file="spi-uart-arty-s7.xpr"
 		;;
 	*)
-		echo "Invalid argument: $1. Must be 'arty' or 'cmod'."
+		echo "Invalid argument: $1. Must be 'a7' or 's7'."
 		exit 1
 		;;
 esac
